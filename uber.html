@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uber · ride hailing</title>
+  <!-- Font Awesome (clean icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', Roboto, -apple-system, sans-serif;
+    }
+
+    body {
+      background: #f2f5f9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    /* main card – Uber style */
+    .uber-card {
+      max-width: 1200px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 2.5rem;
+      box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      transition: 0.2s;
+    }
+
+    /* header – black / dark */
+    .uber-header {
+      background: #0f0f0f;
+      padding: 1.4rem 2.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo i {
+      font-size: 2rem;
+      color: #ffffff;
+      background: #1a1a1a;
+      padding: 6px;
+      border-radius: 40px;
+    }
+
+    .logo span {
+      font-weight: 600;
+      font-size: 1.8rem;
+      letter-spacing: -0.5px;
+      color: white;
+    }
+
+    .logo span small {
+      font-weight: 300;
+      font-size: 1rem;
+      color: #aaa;
+      margin-left: 4px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      color: #ddd;
+    }
+
+    .nav-links a {
+      color: #eaeaea;
+      text-decoration: none;
+      font-weight: 450;
+      font-size: 0.95rem;
+      transition: 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-links a i {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .nav-links a:hover {
+      color: white;
+    }
+
+    .nav-links a:hover i {
+      color: #ccc;
+    }
+
+    .btn-ride {
+      background: #ffffff;
+      color: #0f0f0f;
+      border: none;
+      padding: 0.6rem 1.6rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .btn-ride i {
+      color: #0f0f0f;
+    }
+
+    .btn-ride:hover {
+      background: #eaeaea;
+      transform: scale(0.97);
+    }
+
+    /* hero / booking area */
+    .hero-section {
+      display: flex;
+      flex-wrap: wrap;
+      background: #fafcff;
+    }
+
+    .booking-panel {
+      flex: 1.2;
+      min-width: 300px;
+      padding: 2.5rem 2.5rem 2.8rem;
+      background: #ffffff;
+    }
+
+    .booking-panel h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: #0b1a26;
+      margin-bottom: 0.5rem;
+    }
+
+    .booking-panel .sub {
+      color: #4d667a;
+      margin-bottom: 2rem;
+      font-weight: 400;
+      font-size: 1rem;
+    }
+
+    .ride-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .form-group {
+      display: flex;
+      align-items: center;
+      background: #f2f6fc;
+      border-radius: 60px;
+      padding: 0.1rem 0.1rem 0.1rem 1.5rem;
+      border: 1px solid #e2eaf2;
+      transition: 0.15s;
+    }
+
+    .form-group:focus-within {
+      border-color: #0f0f0f;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+
+    .form-group i {
+      color: #5f7b92;
+      font-size: 1rem;
+      margin-right: 12px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .form-group input {
+      border: none;
+      background: transparent;
+      padding: 0.9rem 0.8rem 0.9rem 0;
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+      color: #0f1f2e;
+    }
+
+    .form-group input::placeholder {
+      color: #849eb5;
+      font-weight: 300;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      min-width: 130px;
+    }
+
+    .btn-request {
+      background: #0f0f0f;
+      color: white;
+      border: none;
+      padding: 1rem 0;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 0.6rem;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-request i {
+      color: #b0c9dd;
+    }
+
+    .btn-request:hover {
+      background: #2a2a2a;
+      transform: scale(0.98);
+    }
+
+    /* right panel – map / promo */
+    .promo-panel {
+      flex: 1;
+      min-width: 240px;
+      background: #eef3fa;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-image: radial-gradient(circle at 20% 30%, #d9e3ef 0%, #eaf0f7 90%);
+    }
+
+    .promo-card {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(2px);
+      border-radius: 2rem;
+      padding: 2rem 1.8rem;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+    }
+
+    .promo-card .icon-big {
+      font-size: 2.2rem;
+      color: #0f1f2e;
+      background: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.02);
+    }
+
+    .promo-card h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #0b1a26;
+    }
+
+    .promo-card p {
+      color: #1f3a4e;
+      margin: 0.5rem 0 1.2rem;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .promo-tag {
+      background: #0f0f0f;
+      color: white;
+      padding: 0.4rem 1.2rem;
+      border-radius: 40px;
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .promo-tag i {
+      margin-right: 6px;
+      color: #ccc;
+    }
+
+    /* ride options (icons) */
+    .ride-options {
+      display: flex;
+      gap: 1.2rem;
+      margin-top: 1.8rem;
+      flex-wrap: wrap;
+    }
+
+    .ride-opt {
+      background: white;
+      padding: 0.6rem 1.2rem 0.6rem 1rem;
+      border-radius: 60px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #153140;
+      border: 1px solid #d7e2ee;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+      transition: 0.1s;
+      cursor: default;
+    }
+
+    .ride-opt i {
+      color: #1f4763;
+      font-size: 1rem;
+    }
+
+    .ride-opt:hover {
+      background: #f5f9ff;
+      border-color: #b0c6db;
+    }
+
+    /* footer */
+    .uber-footer {
+      background: #f8faff;
+      padding: 1rem 2.2rem;
+      border-top: 1px solid #e6edf5;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: #2f4b62;
+    }
+
+    .uber-footer a {
+      color: #2f4b62;
+      text-decoration: none;
+      margin-left: 1.2rem;
+      transition: 0.1s;
+    }
+
+    .uber-footer a:hover {
+      color: #0f0f0f;
+    }
+
+    .uber-footer i {
+      margin-right: 4px;
+      color: #4f708b;
+    }
+
+    @media (max-width: 760px) {
+      .uber-header { padding: 1rem 1.5rem; }
+      .booking-panel { padding: 2rem 1.5rem; }
+      .promo-panel { padding: 2rem 1.5rem; }
+      .nav-links { gap: 1rem; }
+    }
+
+    @media (max-width: 500px) {
+      .logo span { font-size: 1.4rem; }
+      .booking-panel h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="uber-card">
+
+  <!-- header (Uber style) -->
+  <header class="uber-header">
+    <div class="logo">
+      <i class="fas fa-car"></i>
+      <span>Uber <small>ride</small></span>
+    </div>
+    <div class="nav-links">
+      <a href="#"><i class="fas fa-ride"></i> Ride</a>
+      <a href="#"><i class="fas fa-utensils"></i> Eats</a>
+      <a href="#"><i class="fas fa-suitcase"></i> Business</a>
+      <button class="btn-ride"><i class="fas fa-user-circle"></i> Sign in</button>
+    </div>
+  </header>
+
+  <!-- main content: booking + promo -->
+  <div class="hero-section">
+    <!-- left: booking form -->
+    <div class="booking-panel">
+      <h1>Get your ride</h1>
+      <div class="sub">Request a trip in minutes</div>
+
+      <form class="ride-form" id="rideForm">
+        <div class="form-group">
+          <i class="fas fa-circle"></i>
+          <input type="text" placeholder="Enter pickup location" value="Times Square, NY" id="pickupInput">
+        </div>
+        <div class="form-group">
+          <i class="fas fa-map-pin"></i>
+          <input type="text" placeholder="Enter destination" value="JFK Airport" id="destInput">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="text" placeholder="Today" value="Today, 4:30 PM" id="dateInput">
+          </div>
+          <div class="form-group">
+            <i class="fas fa-user"></i>
+            <input type="text" placeholder="1 rider" value="2 riders" id="riderInput">
+          </div>
+        </div>
+
+        <button type="button" class="btn-request" id="requestBtn">
+          <i class="fas fa-paper-plane"></i> Request now
+        </button>
+      </form>
+
+      <!-- ride type quick select -->
+      <div class="ride-options">
+        <span class="ride-opt"><i class="fas fa-car-side"></i> UberX</span>
+        <span class="ride-opt"><i class="fas fa-taxi"></i> Comfort</span>
+        <span class="ride-opt"><i class="fas fa-van-shuttle"></i> XL</span>
+        <span class="ride-opt"><i class="fas fa-crown"></i> Black</span>
+      </div>
+    </div>
+
+    <!-- right: promo / map-like panel -->
+    <div class="promo-panel">
+      <div class="promo-card">
+        <div class="icon-big"><i class="fas fa-map-marked-alt"></i></div>
+        <h3>Ride with confidence</h3>
+        <p>Safety first. 24/7 support, GPS tracking, and cashless payments.</p>
+        <span class="promo-tag"><i class="fas fa-shield-alt"></i> Trusted rides</span>
+
+        <div style="margin-top: 1.8rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 1.2rem;">
+          <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.9rem;">
+            <i class="fas fa-phone-alt" style="color: #0f1f2e;"></i>
+            <span style="color: #1a3346;">+1 (800) 555‑UBER</span>
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; font-size: 0.9rem;">
+            <i class="fas fa-clock" style="color: #0f1f2e;"></i>
+            <span style="color: #1a3346;">Available 24/7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="uber-footer">
+    <div>
+      <i class="fas fa-globe-americas"></i> © 2026 Uber Technologies
+    </div>
+    <div>
+      <a href="#"><i class="fas fa-question-circle"></i> Help</a>
+      <a href="#"><i class="fas fa-user-cog"></i> Account</a>
+      <a href="#"><i class="fas fa-lock"></i> Privacy</a>
+    </div>
+  </div>
+</div>
+
+<!-- minimal JS for interaction -->
+<script>
+  (function() {
+    const requestBtn = document.getElementById('requestBtn');
+    const pickup = document.getElementById('pickupInput');
+    const dest = document.getElementById('destInput');
+    const dateInput = document.getElementById('dateInput');
+    const riderInput = document.getElementById('riderInput');
+
+    if (requestBtn) {
+      requestBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // gather values (trim)
+        const from = pickup ? pickup.value.trim() : 'Times Square, NY';
+        const to = dest ? dest.value.trim() : 'JFK Airport';
+        const when = dateInput ? dateInput.value.trim() : 'Today, 4:30 PM';
+        const riders = riderInput ? riderInput.value.trim() : '2 riders';
+
+        // simple alert simulation
+        alert(`🚗 Ride requested\n\nFrom: ${from}\nTo: ${to}\nWhen: ${when}\nRiders: ${riders}\n\n(Your driver is on the way)`);
+      });
+    }
+
+    // additional: if user clicks on any ride-opt (just feedback)
+    document.querySelectorAll('.ride-opt').forEach(opt => {
+      opt.addEventListener('click', function() {
+        const text = this.innerText.trim();
+        alert(`Selected ride type: ${text} (demo)`);
+      });
+    });
+
+    // header sign in button
+    const signInBtn = document.querySelector('.btn-ride');
+    if (signInBtn) {
+      signInBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert('Sign in / account panel (demo)');
+      });
+    }
+
+    // nav links (prevent default for demo)
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const txt = this.innerText.trim() || this.querySelector('i')?.nextSibling?.textContent?.trim() || 'link';
+        alert(`Navigation: ${txt} (demo)`);
+      });
+    });
+
+    // footer links
+    document.querySelectorAll('.uber-footer a').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert(`Footer: ${this.innerText.trim()} (demo)`);
+      });
+    });
+
+  })();
+</script>
+</body>
+</html>
