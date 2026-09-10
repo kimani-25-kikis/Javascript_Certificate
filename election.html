@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Election Hub · Secure Voting</title>
+    <!-- Font Awesome (clean icons, no emojis) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: #eef2f7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.8rem;
+        }
+
+        /* main card – clean, neutral, no purple gradient */
+        .election-card {
+            max-width: 1320px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 2.2rem;
+            box-shadow: 0 24px 48px -12px rgba(0, 20, 30, 0.20);
+            padding: 2rem 2.2rem 2.5rem;
+            transition: 0.2s;
+        }
+
+        /* header */
+        .election-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem 1.8rem;
+            margin-bottom: 2.2rem;
+            border-bottom: 1px solid #e3e9f2;
+            padding-bottom: 1.2rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .brand-icon {
+            background: #1a2b3c;
+            color: white;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .brand-text {
+            font-weight: 600;
+            font-size: 1.7rem;
+            letter-spacing: -0.4px;
+            color: #0b1a28;
+        }
+
+        .brand-text span {
+            color: #2a6b8a;
+            font-weight: 300;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #f0f5fc;
+            border: none;
+            padding: 0.65rem 1.5rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #1a3348;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.12s;
+            border: 1px solid transparent;
+        }
+
+        .btn i {
+            color: #3a627e;
+        }
+
+        .btn-primary {
+            background: #1a3348;
+            color: white;
+            box-shadow: 0 6px 12px -6px rgba(20, 50, 80, 0.25);
+        }
+
+        .btn-primary i {
+            color: #b6d0e5;
+        }
+
+        .btn-primary:hover {
+            background: #0f2638;
+            transform: scale(0.97);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d3deed;
+        }
+
+        .btn-outline:hover {
+            background: #e9f0f8;
+            border-color: #b2c6db;
+        }
+
+        /* stats row */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2.2rem;
+        }
+
+        .stat-box {
+            background: #f8fbfe;
+            border-radius: 1.2rem;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid #e3ebf5;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .stat-icon {
+            background: #e1eaf3;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1f405a;
+            font-size: 1.2rem;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5f7a93;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #0a1f2e;
+            line-height: 1.2;
+        }
+
+        /* main content: two columns */
+        .election-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 820px) {
+            .election-grid {
+                grid-template-columns: 1fr;
+                gap: 1.8rem;
+            }
+        }
+
+        /* left: candidates table */
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .section-title h2 {
+            font-weight: 600;
+            font-size: 1.4rem;
+            color: #102b3d;
+            letter-spacing: -0.2px;
+        }
+
+        .section-title .count-badge {
+            background: #e5edf6;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #1f405a;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 1.2rem;
+            border: 1px solid #e6edf6;
+            background: #fbfdff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92rem;
+            min-width: 400px;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.9rem 1.2rem;
+            background: #f2f7fe;
+            color: #1b3b52;
+            font-weight: 600;
+            border-bottom: 1px solid #dae3ef;
+        }
+
+        td {
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid #eef3fa;
+            color: #1a3144;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .candidate-name {
+            font-weight: 500;
+        }
+
+        .party-tag {
+            background: #e7eef7;
+            padding: 0.15rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1f4a66;
+            display: inline-block;
+        }
+
+        .progress-bar {
+            width: 80px;
+            height: 6px;
+            background: #e0e9f2;
+            border-radius: 20px;
+            display: inline-block;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1e4a66;
+            border-radius: 20px;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 0.7rem;
+            color: #6d89a4;
+        }
+
+        .action-icons i {
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 0.95rem;
+        }
+
+        .action-icons i:hover {
+            color: #102b3d;
+            transform: scale(1.1);
+        }
+
+        /* right: voter panel + results summary */
+        .voter-panel {
+            background: #f8fbfe;
+            border-radius: 1.5rem;
+            padding: 1.6rem 1.6rem 1.8rem;
+            border: 1px solid #e3ebf5;
+        }
+
+        .voter-panel h3 {
+            font-weight: 600;
+            color: #102b3d;
+            font-size: 1.25rem;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voter-panel h3 i {
+            color: #2a6b8a;
+        }
+
+        .voter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .voter-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.8rem;
+            background: white;
+            border-radius: 40px;
+            border: 1px solid #e1eaf2;
+            font-size: 0.9rem;
+        }
+
+        .voter-item .voter-name i {
+            color: #4f708b;
+            width: 22px;
+        }
+
+        .voter-status {
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            background: #e0f0e6;
+            color: #0c6b3a;
+        }
+
+        .voter-status.pending {
+            background: #f0edf0;
+            color: #5d4e5e;
+        }
+
+        .btn-vote {
+            background: #1a3348;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 500;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-size: 1rem;
+        }
+
+        .btn-vote i {
+            color: #b6d0e5;
+        }
+
+        .btn-vote:hover {
+            background: #0f2638;
+            transform: scale(0.98);
+        }
+
+        .results-mini {
+            margin-top: 1.8rem;
+            border-top: 1px solid #dbe4ef;
+            padding-top: 1.2rem;
+        }
+
+        .results-mini .result-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            padding: 0.3rem 0;
+            color: #1d3b52;
+        }
+
+        .results-mini .result-row span:last-child {
+            font-weight: 500;
+        }
+
+        /* footer */
+        .election-footer {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e6edf6;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            color: #4b6a82;
+            font-size: 0.85rem;
+        }
+
+        .election-footer i {
+            margin-right: 4px;
+            color: #5b7d99;
+        }
+
+        .election-footer a {
+            color: #2f506a;
+            text-decoration: none;
+            margin-left: 1.2rem;
+        }
+
+        .election-footer a:hover {
+            color: #0b1a28;
+        }
+
+        /* small */
+        @media (max-width: 480px) {
+            .election-card { padding: 1.2rem; }
+            .brand-text { font-size: 1.3rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="election-card">
+
+    <!-- header -->
+    <div class="election-header">
+        <div class="brand">
+            <div class="brand-icon"><i class="fas fa-vote-yea"></i></div>
+            <div class="brand-text">Election<span>Hub</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline"><i class="fas fa-file-export"></i> Export</button>
+            <button class="btn btn-primary" id="newElectionBtn"><i class="fas fa-plus-circle"></i> New election</button>
+        </div>
+    </div>
+
+    <!-- stats -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Registered voters</span>
+                <span class="stat-value" id="totalVoters">142</span>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Votes cast</span>
+                <span class="stat-value" id="votesCast">98</span>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-flag-checkered"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Candidates</span>
+                <span class="stat-value" id="candidateCount">4</span>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-percent"></i></div>
+            <div class="stat-info">
+                <span class="stat-label">Turnout</span>
+                <span class="stat-value" id="turnout">69%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- main grid -->
+    <div class="election-grid">
+        <!-- left: candidates table -->
+        <div>
+            <div class="section-title">
+                <h2><i class="fas fa-user-tie" style="margin-right: 8px; color: #26648b;"></i> Candidates</h2>
+                <span class="count-badge"><i class="far fa-clock"></i> 4 running</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Party</th>
+                            <th>Votes</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTableBody">
+                        <!-- injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- right: voter panel + quick results -->
+        <div>
+            <div class="voter-panel">
+                <h3><i class="fas fa-address-card"></i> Voter roll</h3>
+                <div class="voter-list" id="voterList">
+                    <!-- injected by JS -->
+                </div>
+                <button class="btn-vote" id="castVoteBtn"><i class="fas fa-check-circle"></i> Cast vote (demo)</button>
+
+                <div class="results-mini">
+                    <div style="display: flex; justify-content: space-between; font-weight: 600; color: #102b3d; margin-bottom: 0.3rem;">
+                        <span>Quick results</span>
+                        <span><i class="fas fa-poll"></i> live</span>
+                    </div>
+                    <div id="quickResults">
+                        <!-- injected -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- footer -->
+    <div class="election-footer">
+        <div><i class="fas fa-shield-alt"></i> Secure · transparent · verifiable</div>
+        <div>
+            <a href="#"><i class="fas fa-flag"></i> Results</a>
+            <a href="#"><i class="fas fa-user-check"></i> Voter list</a>
+            <a href="#"><i class="fas fa-gavel"></i> About</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- data (no emojis, no purple gradient) -----
+        let candidates = [
+            { id: 1, name: 'Elena Voss', party: 'Green Alliance', votes: 42 },
+            { id: 2, name: 'Marcus Webb', party: 'Progressive Front', votes: 31 },
+            { id: 3, name: 'Sophia Khan', party: 'Unity Party', votes: 18 },
+            { id: 4, name: 'James Okafor', party: 'Independent', votes: 7 },
+        ];
+
+        let voters = [
+            { name: 'A. Rodriguez', status: 'voted' },
+            { name: 'B. Chen', status: 'voted' },
+            { name: 'C. Müller', status: 'pending' },
+            { name: 'D. Singh', status: 'voted' },
+            { name: 'E. Dubois', status: 'pending' },
+            { name: 'F. Kim', status: 'pending' },
+        ];
+
+        // helper: compute totals
+        function getTotals() {
+            const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
+            const totalVoters = voters.length;
+            const votedCount = voters.filter(v => v.status === 'voted').length;
+            const turnout = totalVoters ? Math.round((votedCount / totalVoters) * 100) : 0;
+            return { totalVotes, totalVoters, votedCount, turnout };
+        }
+
+        // render candidates table
+        function renderCandidates() {
+            const tbody = document.getElementById('candidatesTableBody');
+            if (!tbody) return;
+            const total = getTotals().totalVotes || 1; // avoid divide by zero
+
+            let html = '';
+            candidates.forEach(c => {
+                const percent = Math.round((c.votes / total) * 100);
+                html += `<tr>
+                    <td class="candidate-name">${c.name}</td>
+                    <td><span class="party-tag">${c.party}</span></td>
+                    <td>
+                        <span class="progress-bar"><span class="progress-fill" style="width: ${percent}%;"></span></span>
+                        ${c.votes} (${percent}%)
+                    </td>
+                    <td style="text-align: right;">
+                        <div class="action-icons">
+                            <i class="far fa-edit" data-id="${c.id}" title="Edit"></i>
+                            <i class="far fa-trash-alt" data-id="${c.id}" title="Remove"></i>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            // attach delete & edit events
+            tbody.querySelectorAll('.action-icons i').forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = parseInt(this.dataset.id, 10);
+                    if (this.classList.contains('fa-trash-alt')) {
+                        if (confirm(`Remove candidate "${candidates.find(c => c.id === id)?.name}"?`)) {
+                            candidates = candidates.filter(c => c.id !== id);
+                            renderCandidates();
+                            updateAll();
+                        }
+                    } else if (this.classList.contains('fa-edit')) {
+                        const cand = candidates.find(c => c.id === id);
+                        if (cand) {
+                            const newName = prompt('Edit candidate name:', cand.name);
+                            if (newName && newName.trim() !== '') {
+                                cand.name = newName.trim();
+                                renderCandidates();
+                                updateAll();
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // render voter list
+        function renderVoters() {
+            const container = document.getElementById('voterList');
+            if (!container) return;
+            let html = '';
+            voters.forEach(v => {
+                const statusClass = v.status === 'voted' ? '' : 'pending';
+                html += `<div class="voter-item">
+                    <span class="voter-name"><i class="fas fa-user-circle"></i> ${v.name}</span>
+                    <span class="voter-status ${statusClass}">${v.status === 'voted' ? 'Voted' : 'Pending'}</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // render quick results (right panel)
+        function renderQuickResults() {
+            const container = document.getElementById('quickResults');
+            if (!container) return;
+            const total = getTotals().totalVotes || 1;
+            let html = '';
+            candidates.forEach(c => {
+                const pct = Math.round((c.votes / total) * 100);
+                html += `<div class="result-row">
+                    <span>${c.name} (${c.party})</span>
+                    <span>${c.votes} · ${pct}%</span>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // update stats numbers
+        function updateStats() {
+            const { totalVoters, votedCount, turnout } = getTotals();
+            document.getElementById('totalVoters').innerText = totalVoters;
+            document.getElementById('votesCast').innerText = votedCount;
+            document.getElementById('candidateCount').innerText = candidates.length;
+            document.getElementById('turnout').innerText = `${turnout}%`;
+        }
+
+        // update all
+        function updateAll() {
+            renderCandidates();
+            renderVoters();
+            renderQuickResults();
+            updateStats();
+        }
+
+        // ----- simulate voting (adds vote to first candidate) -----
+        function castVote() {
+            if (candidates.length === 0) {
+                alert('No candidates available.');
+                return;
+            }
+            // pick a random candidate to increment
+            const idx = Math.floor(Math.random() * candidates.length);
+            candidates[idx].votes += 1;
+            // also mark a random pending voter as voted
+            const pending = voters.filter(v => v.status === 'pending');
+            if (pending.length > 0) {
+                const randPending = pending[Math.floor(Math.random() * pending.length)];
+                randPending.status = 'voted';
+            } else {
+                // if all voted, just add a new voter (demo)
+                voters.push({ name: `Voter ${voters.length + 1}`, status: 'voted' });
+            }
+            updateAll();
+            alert(`Vote cast for ${candidates[idx].name} (demo)`);
+        }
+
+        // ----- add sample candidate (via new election button) -----
+        function addSampleCandidate() {
+            const newId = candidates.length ? Math.max(...candidates.map(c => c.id)) + 1 : 1;
+            const names = ['Aisha Rahman', 'Liam O\'Brien', 'Chloe Tanaka', 'David Costa'];
+            const parties = ['Forward Party', 'People\'s Choice', 'Reform Alliance', 'Independent'];
+            const randName = names[Math.floor(Math.random() * names.length)];
+            const randParty = parties[Math.floor(Math.random() * parties.length)];
+            candidates.push({
+                id: newId,
+                name: randName,
+                party: randParty,
+                votes: Math.floor(Math.random() * 15),
+            });
+            updateAll();
+        }
+
+        // ----- event listeners -----
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAll();
+
+            // cast vote button
+            const voteBtn = document.getElementById('castVoteBtn');
+            if (voteBtn) {
+                voteBtn.addEventListener('click', castVote);
+            }
+
+            // new election button (add candidate)
+            const newBtn = document.getElementById('newElectionBtn');
+            if (newBtn) {
+                newBtn.addEventListener('click', function() {
+                    addSampleCandidate();
+                });
+            }
+
+            // export button (demo)
+            const exportBtn = document.querySelector('.btn-outline');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    alert('Export election data (simulated)');
+                });
+            }
+
+            // footer links (demo)
+            document.querySelectorAll('.election-footer a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert(`Navigate to: ${this.innerText.trim()}`);
+                });
+            });
+        });
+
+    })();
+</script>
+</body>
+</html>
