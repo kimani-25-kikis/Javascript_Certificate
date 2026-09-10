@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Commons Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1F2A24;
+    --forest:#2C4A3B;
+    --forest-dark:#20362B;
+    --parchment:#EDE6D6;
+    --card:#FBF7EC;
+    --brass:#B3873F;
+    --brass-dark:#8C6A2F;
+    --rust:#A23E2E;
+    --line: rgba(31,42,36,0.18);
+    --shadow: rgba(31,42,36,0.16);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:"Source Serif 4", Georgia, serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      radial-gradient(rgba(31,42,36,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    z-index: 0;
+  }
+
+  .stamp{
+    font-family:"Courier Prime", monospace;
+    letter-spacing:0.03em;
+  }
+
+  a{color:inherit;}
+
+  /* ---------- Layout shell ---------- */
+  .wrap{
+    max-width:1120px;
+    margin:0 auto;
+    padding:0 28px 80px;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 0 18px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:48px;
+  }
+  .mark{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .mark-badge{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:var(--forest);
+    color:var(--parchment);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Courier Prime", monospace;
+    font-size:13px;
+    font-weight:700;
+    flex-shrink:0;
+  }
+  .mark-name{
+    font-size:19px;
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px;
+  }
+  .tab{
+    font-family:"Courier Prime", monospace;
+    font-size:12.5px;
+    padding:9px 18px;
+    border-radius:999px;
+    border:none;
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    transition:background .18s ease, color .18s ease;
+  }
+  .tab.active{
+    background:var(--forest);
+    color:var(--parchment);
+  }
+  .tab .count{
+    background:rgba(31,42,36,0.12);
+    border-radius:999px;
+    padding:1px 7px;
+    font-size:11px;
+  }
+  .tab.active .count{
+    background:rgba(237,230,214,0.22);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:56px;
+    align-items:center;
+    margin-bottom:64px;
+  }
+  .hero h1{
+    font-size:44px;
+    line-height:1.12;
+    font-weight:600;
+    margin:0 0 18px;
+    max-width:11ch;
+  }
+  .hero p{
+    font-size:16.5px;
+    max-width:46ch;
+    color:rgba(31,42,36,0.82);
+    margin:0 0 24px;
+  }
+  .hero-stats{
+    display:flex;
+    gap:28px;
+    font-family:"Courier Prime", monospace;
+    font-size:12.5px;
+  }
+  .hero-stats div strong{
+    display:block;
+    font-family:"Source Serif 4", serif;
+    font-size:22px;
+    font-weight:600;
+  }
+
+  /* Due-date card illustration */
+  .card-illustration{
+    background:var(--card);
+    border:1px solid var(--line);
+    box-shadow: 0 18px 40px -20px var(--shadow);
+    padding:22px 22px 18px;
+    transform: rotate(1.4deg);
+    position:relative;
+  }
+  .card-illustration::after{
+    content:"";
+    position:absolute;
+    top:14px; right:14px;
+    width:26px;height:26px;
+    border:1.5px solid var(--rust);
+    border-radius:50%;
+    opacity:0.55;
+  }
+  .card-illustration .ci-title{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--brass-dark);
+    margin-bottom:4px;
+  }
+  .card-illustration .ci-book{
+    font-size:19px;
+    font-weight:600;
+    margin-bottom:14px;
+    padding-bottom:12px;
+    border-bottom:1px dashed var(--line);
+  }
+  .ci-row-head, .ci-row{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    font-family:"Courier Prime", monospace;
+    font-size:11.5px;
+    padding:6px 0;
+  }
+  .ci-row-head{
+    color:var(--brass-dark);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .ci-row{
+    border-bottom:1px dotted var(--line);
+    color:rgba(31,42,36,0.78);
+  }
+  .ci-row.filled{ color:var(--ink); }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:26px;
+  }
+  .search{
+    position:relative;
+    flex:1;
+    min-width:220px;
+    max-width:360px;
+  }
+  .search input{
+    width:100%;
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:11px 14px 11px 36px;
+    font-family:"Source Serif 4", serif;
+    font-size:14.5px;
+    color:var(--ink);
+    border-radius:3px;
+  }
+  .search input:focus{
+    outline:2px solid var(--forest);
+    outline-offset:1px;
+  }
+  .search input::placeholder{ color:rgba(31,42,36,0.45); }
+  .search svg{
+    position:absolute;
+    left:12px; top:50%;
+    transform:translateY(-50%);
+    opacity:0.5;
+  }
+  .genres{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-family:"Courier Prime", monospace;
+    font-size:11.5px;
+    padding:7px 13px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--parchment);
+  }
+
+  .section-label{
+    font-family:"Courier Prime", monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--brass-dark);
+    margin:0 0 16px;
+  }
+
+  /* ---------- Book grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap:20px;
+  }
+
+  .book{
+    background:var(--card);
+    border:1px solid var(--line);
+    position:relative;
+    padding:18px 18px 16px;
+    display:flex;
+    flex-direction:column;
+    min-height:230px;
+    transition: box-shadow .18s ease, transform .18s ease;
+  }
+  .book:hover{
+    box-shadow: 0 16px 30px -18px var(--shadow);
+    transform: translateY(-2px);
+  }
+  .book::before{
+    content:"";
+    position:absolute;
+    top:0; right:0;
+    width:0; height:0;
+    border-style:solid;
+    border-width:0 16px 16px 0;
+    border-color: transparent var(--parchment) transparent transparent;
+  }
+  .book-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .book-genre{
+    font-family:"Courier Prime", monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    color:var(--brass-dark);
+  }
+  .book-call{
+    font-family:"Courier Prime", monospace;
+    font-size:10px;
+    color:rgba(31,42,36,0.4);
+  }
+  .book-title{
+    font-size:18px;
+    font-weight:600;
+    line-height:1.25;
+    margin:0 0 4px;
+  }
+  .book-author{
+    font-size:13.5px;
+    color:rgba(31,42,36,0.68);
+    margin:0 0 12px;
+  }
+  .book-blurb{
+    font-size:13px;
+    color:rgba(31,42,36,0.72);
+    margin:0 0 16px;
+    flex:1;
+  }
+
+  .book-foot{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+
+  .status{
+    font-family:"Courier Prime", monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    padding:4px 9px;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+  .status.available{ color:#2C4A3B; border:1px solid #2C4A3B; }
+  .status.you{ color:var(--brass-dark); border:1px solid var(--brass-dark); }
+  .status.other{ color:var(--rust); border:1px solid var(--rust); }
+
+  .btn{
+    font-family:"Courier Prime", monospace;
+    font-size:11.5px;
+    padding:8px 14px;
+    border-radius:3px;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--parchment);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn:hover{ background:var(--forest-dark); border-color:var(--forest-dark); }
+  .btn.ghost{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  .btn.ghost:hover{ border-color:var(--ink); }
+  .btn:disabled{
+    background:transparent;
+    color:rgba(31,42,36,0.35);
+    border-color:var(--line);
+    cursor:default;
+  }
+
+  .due-note{
+    font-family:"Courier Prime", monospace;
+    font-size:10.5px;
+    color:rgba(31,42,36,0.6);
+  }
+
+  /* ---------- My shelf ---------- */
+  .shelf-item{
+    display:flex;
+    gap:18px;
+    align-items:center;
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:16px 18px;
+    margin-bottom:12px;
+  }
+  .shelf-spine{
+    width:6px;
+    align-self:stretch;
+    border-radius:2px;
+    flex-shrink:0;
+  }
+  .shelf-info{ flex:1; min-width:0; }
+  .shelf-title{ font-size:16.5px; font-weight:600; margin:0 0 2px; }
+  .shelf-meta{ font-size:13px; color:rgba(31,42,36,0.65); margin:0; }
+  .shelf-due{
+    text-align:right;
+    font-family:"Courier Prime", monospace;
+    font-size:11.5px;
+  }
+  .shelf-due .lbl{
+    display:block;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:9.5px;
+    color:var(--brass-dark);
+    margin-bottom:3px;
+  }
+
+  .empty{
+    text-align:center;
+    padding:70px 20px;
+    border:1px dashed var(--line);
+  }
+  .empty p:first-child{
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .empty p{
+    color:rgba(31,42,36,0.65);
+    font-size:14px;
+    margin:0;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:26px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:"Courier Prime", monospace;
+    font-size:12.5px;
+    padding:12px 20px;
+    border-radius:3px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:20;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  footer{
+    margin-top:70px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+    font-family:"Courier Prime", monospace;
+    font-size:11px;
+    color:rgba(31,42,36,0.5);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  @media (max-width: 760px){
+    .hero{ grid-template-columns: 1fr; gap:36px; }
+    .hero h1{ font-size:34px; max-width:none; }
+    .topbar{ flex-direction:column; align-items:flex-start; gap:14px; }
+    .controls{ flex-direction:column; align-items:stretch; }
+    .search{ max-width:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="mark">
+      <div class="mark-badge">CL</div>
+      <div class="mark-name">The Commons Library</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="browse">Browse <span class="count" id="count-browse">0</span></button>
+      <button class="tab" data-tab="shelf">My Shelf <span class="count" id="count-shelf">0</span></button>
+    </div>
+  </div>
+
+  <section class="hero" id="hero-section">
+    <div>
+      <h1>Borrow something worth staying up for.</h1>
+      <p>Every book below lives on our shelves right now. Take one home, keep it two weeks, bring it back — no fines, just good timing.</p>
+      <div class="hero-stats">
+        <div><strong id="stat-total">0</strong>on the shelves</div>
+        <div><strong id="stat-available">0</strong>ready to borrow</div>
+        <div><strong id="stat-you">0</strong>on your shelf</div>
+      </div>
+    </div>
+    <div class="card-illustration">
+      <div class="ci-title">Date Due Card</div>
+      <div class="ci-book">The Commons Library</div>
+      <div class="ci-row-head"><span>Borrower</span><span>Due</span></div>
+      <div class="ci-row filled"><span>A. Okafor</span><span>Sep 04</span></div>
+      <div class="ci-row filled"><span>R. Delacroix</span><span>Sep 18</span></div>
+      <div class="ci-row"><span>&nbsp;</span><span>&nbsp;</span></div>
+      <div class="ci-row"><span>&nbsp;</span><span>&nbsp;</span></div>
+    </div>
+  </section>
+
+  <div id="browse-view">
+    <div class="controls">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Search by title or author…">
+      </div>
+      <div class="genres" id="genre-chips"></div>
+    </div>
+
+    <p class="section-label" id="grid-label">All books</p>
+    <div class="grid" id="book-grid"></div>
+  </div>
+
+  <div id="shelf-view" style="display:none;">
+    <p class="section-label">Currently on your shelf</p>
+    <div id="shelf-list"></div>
+  </div>
+
+  <footer>
+    <span>The Commons Library — a reading room, not a warehouse</span>
+    <span>Loans run 14 days from checkout</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+  const SPINES = ["#2C4A3B","#B3873F","#A23E2E","#5B6B4F","#7A5C3E","#3E5A6B"];
+
+  const RAW_BOOKS = [
+    { title:"The Quiet Ledger", author:"Mireille Saunier", genre:"Fiction", year:2019, call:"FIC SAU", blurb:"A bookkeeper in a shrinking coastal town uncovers a debt no one wants repaid." },
+    { title:"Salt and Static", author:"Owen Marchetti", genre:"Fiction", year:2021, call:"FIC MAR", blurb:"Three siblings return to their grandmother's radio station after the signal goes dark." },
+    { title:"Tidewrack", author:"Junko Ishii", genre:"Poetry", year:2018, call:"POE ISH", blurb:"Short, salt-worn poems written from a lighthouse keeper's rotation notebook." },
+    { title:"A Grammar of Rust", author:"Peter Voss", genre:"Poetry", year:2022, call:"POE VOS", blurb:"Industrial-town verse tracing what gets left behind when a mill closes." },
+    { title:"The Interior of Weather", author:"Halyna Petrenko", genre:"Science", year:2020, call:"SCI PET", blurb:"A meteorologist's field notes on how storms form inside ordinary afternoons." },
+    { title:"Deep Counting", author:"Femi Adeyemi", genre:"Science", year:2023, call:"SCI ADE", blurb:"An accessible walk through how ecologists actually count what they can't see." },
+    { title:"The Last Locksmith", author:"Greta Solberg", genre:"Mystery", year:2017, call:"MYS SOL", blurb:"A retiring locksmith takes one final job: opening a door that shouldn't exist." },
+    { title:"Nine Missed Calls", author:"Andres Pujol", genre:"Mystery", year:2022, call:"MYS PUJ", blurb:"A voicemail from a dead man restarts an investigation everyone wanted closed." },
+    { title:"Elsewhere, Her Mother", author:"Bilqis Rahman", genre:"Biography", year:2016, call:"BIO RAH", blurb:"A daughter reconstructs her mother's decade abroad through unsent letters." },
+    { title:"Working the Night Shift", author:"Tomasz Wieczorek", genre:"Biography", year:2020, call:"BIO WIE", blurb:"Forty years inside a steel plant, told the way the author actually lived it." },
+    { title:"The Border of Small Kingdoms", author:"Nadia Farouk", genre:"History", year:2015, call:"HIS FAR", blurb:"How three village councils redrew a map no empire ever noticed." },
+    { title:"Ash Ledgers", author:"Callum Reyes", genre:"History", year:2019, call:"HIS REY", blurb:"A social history of what got rebuilt, and by whom, after four great fires." },
+    { title:"The Cartographer's Daughter", author:"Esme Lindqvist", genre:"Fiction", year:2024, call:"FIC LIN", blurb:"A map-maker's apprentice must finish a chart that keeps contradicting itself." },
+    { title:"Low Tide Arithmetic", author:"Samuel Okonkwo", genre:"Science", year:2021, call:"SCI OKO", blurb:"A marine biologist explains tidal math for people who hated math in school." },
+    { title:"Everything I Borrowed", author:"Ines Duarte", genre:"Poetry", year:2023, call:"POE DUA", blurb:"A collection built entirely from lines overheard on public transit." },
+    { title:"The Understudy's Notebook", author:"Marcus Whitfield", genre:"Biography", year:2018, call:"BIO WHI", blurb:"Twenty years waiting in the wings, and what that taught one actor about timing." }
+  ];
+
+  function addDays(base, days){
+    const d = new Date(base);
+    d.setDate(d.getDate() + days);
+    return d;
+  }
+  function fmt(date){
+    return date.toLocaleDateString('en-US', { month:'short', day:'2-digit' });
+  }
+
+  const today = new Date();
+
+  // Build state: some books pre-borrowed by other patrons, rest available.
+  const books = RAW_BOOKS.map((b, i) => {
+    const preBorrowed = [1,4,7,11].includes(i);
+    return Object.assign({}, b, {
+      id: 'b' + i,
+      spine: SPINES[i % SPINES.length],
+      status: preBorrowed ? 'other' : 'available',
+      dueDate: preBorrowed ? addDays(today, 3 + (i % 9)) : null
+    });
+  });
+
+  let activeGenre = 'All';
+  let query = '';
+  let activeTab = 'browse';
+
+  const genres = ['All', ...Array.from(new Set(books.map(b => b.genre)))];
+
+  const grid = document.getElementById('book-grid');
+  const chipsWrap = document.getElementById('genre-chips');
+  const searchInput = document.getElementById('search-input');
+  const shelfList = document.getElementById('shelf-list');
+  const toastEl = document.getElementById('toast');
+  const gridLabel = document.getElementById('grid-label');
+  const heroSection = document.getElementById('hero-section');
+  const browseView = document.getElementById('browse-view');
+  const shelfView = document.getElementById('shelf-view');
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2400);
+  }
+
+  function renderChips(){
+    chipsWrap.innerHTML = genres.map(g =>
+      `<button class="chip ${g === activeGenre ? 'active' : ''}" data-genre="${g}">${g}</button>`
+    ).join('');
+  }
+
+  function statusMarkup(b){
+    if(b.status === 'available'){
+      return `<span class="status available">Available</span>`;
+    }
+    if(b.status === 'you'){
+      return `<span class="status you">On your shelf</span>`;
+    }
+    return `<span class="status other">Checked out</span>`;
+  }
+
+  function footMarkup(b){
+    if(b.status === 'available'){
+      return `${statusMarkup(b)}<button class="btn" data-action="borrow" data-id="${b.id}">Borrow</button>`;
+    }
+    if(b.status === 'you'){
+      return `${statusMarkup(b)}<button class="btn ghost" data-action="return" data-id="${b.id}">Return</button>`;
+    }
+    return `${statusMarkup(b)}<button class="btn" disabled>Due ${fmt(b.dueDate)}</button>`;
+  }
+
+  function renderGrid(){
+    const filtered = books.filter(b => {
+      const matchesGenre = activeGenre === 'All' || b.genre === activeGenre;
+      const q = query.trim().toLowerCase();
+      const matchesQuery = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+      return matchesGenre && matchesQuery;
+    });
+
+    gridLabel.textContent = query.trim()
+      ? `${filtered.length} result${filtered.length === 1 ? '' : 's'} for "${query.trim()}"`
+      : (activeGenre === 'All' ? 'All books' : activeGenre);
+
+    if(filtered.length === 0){
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <p>Nothing matches that search.</p>
+        <p>Try a different title, author, or shelf.</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(b => `
+      <article class="book">
+        <div class="book-top">
+          <span class="book-genre">${b.genre}</span>
+          <span class="book-call">${b.call}</span>
+        </div>
+        <h3 class="book-title">${b.title}</h3>
+        <p class="book-author">${b.author} · ${b.year}</p>
+        <p class="book-blurb">${b.blurb}</p>
+        <div class="book-foot">
+          ${footMarkup(b)}
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function renderShelf(){
+    const mine = books.filter(b => b.status === 'you');
+    document.getElementById('count-shelf').textContent = mine.length;
+
+    if(mine.length === 0){
+      shelfList.innerHTML = `<div class="empty">
+        <p>Your shelf is empty.</p>
+        <p>Borrow a book from the catalog and it'll show up here.</p>
+      </div>`;
+      return;
+    }
+
+    shelfList.innerHTML = mine.map(b => `
+      <div class="shelf-item">
+        <div class="shelf-spine" style="background:${b.spine}"></div>
+        <div class="shelf-info">
+          <p class="shelf-title">${b.title}</p>
+          <p class="shelf-meta">${b.author} · ${b.call}</p>
+        </div>
+        <div class="shelf-due">
+          <span class="lbl">Due</span>
+          ${fmt(b.dueDate)}
+        </div>
+        <button class="btn ghost" data-action="return" data-id="${b.id}">Return</button>
+      </div>
+    `).join('');
+  }
+
+  function renderStats(){
+    const available = books.filter(b => b.status === 'available').length;
+    const mine = books.filter(b => b.status === 'you').length;
+    document.getElementById('stat-total').textContent = books.length;
+    document.getElementById('stat-available').textContent = available;
+    document.getElementById('stat-you').textContent = mine;
+    document.getElementById('count-browse').textContent = books.length;
+    document.getElementById('count-shelf').textContent = mine;
+  }
+
+  function renderAll(){
+    renderChips();
+    renderGrid();
+    renderShelf();
+    renderStats();
+  }
+
+  function borrow(id){
+    const b = books.find(x => x.id === id);
+    if(!b || b.status !== 'available') return;
+    b.status = 'you';
+    b.dueDate = addDays(new Date(), 14);
+    showToast(`Borrowed “${b.title}.” Due back ${fmt(b.dueDate)}.`);
+    renderAll();
+  }
+
+  function returnBook(id){
+    const b = books.find(x => x.id === id);
+    if(!b || b.status !== 'you') return;
+    b.status = 'available';
+    b.dueDate = null;
+    showToast(`Returned “${b.title}.” Thanks for bringing it back.`);
+    renderAll();
+  }
+
+  document.addEventListener('click', (e) => {
+    const action = e.target.closest('[data-action]');
+    if(action){
+      const id = action.dataset.id;
+      if(action.dataset.action === 'borrow') borrow(id);
+      if(action.dataset.action === 'return') returnBook(id);
+      return;
+    }
+    const chip = e.target.closest('.chip');
+    if(chip){
+      activeGenre = chip.dataset.genre;
+      renderGrid();
+      renderChips();
+      return;
+    }
+    const tab = e.target.closest('.tab');
+    if(tab){
+      activeTab = tab.dataset.tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+      const isBrowse = activeTab === 'browse';
+      browseView.style.display = isBrowse ? '' : 'none';
+      shelfView.style.display = isBrowse ? 'none' : '';
+      heroSection.style.display = isBrowse ? '' : 'none';
+      return;
+    }
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    query = e.target.value;
+    renderGrid();
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
