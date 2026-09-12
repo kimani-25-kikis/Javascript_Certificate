@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 380px;
+      background: #1c1c2e;
+      border-radius: 28px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .history {
+      min-height: 22px;
+      text-align: right;
+      font-size: 14px;
+      color: #6b7280;
+      padding: 0 8px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+    }
+
+    .display {
+      text-align: right;
+      padding: 4px 8px 16px;
+      font-size: 52px;
+      font-weight: 300;
+      color: #f9fafb;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+      min-height: 74px;
+      line-height: 1.2;
+      transition: font-size 0.1s;
+    }
+
+    .display.error {
+      color: #f87171;
+      font-size: 34px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-size: 22px;
+      font-weight: 500;
+      height: 68px;
+      border-radius: 50%;
+      background: #2a2a3e;
+      color: #f9fafb;
+      transition: background 0.15s, transform 0.08s, filter 0.15s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover {
+      background: #35354d;
+    }
+
+    button:active,
+    button.pressed {
+      transform: scale(0.94);
+      filter: brightness(1.2);
+    }
+
+    button.function {
+      background: #3a3a52;
+      color: #c7d2fe;
+      font-size: 20px;
+    }
+
+    button.function:hover {
+      background: #45455f;
+    }
+
+    button.operator {
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 26px;
+    }
+
+    button.operator:hover {
+      background: #6366f1;
+    }
+
+    button.operator.active-operator {
+      background: #ffffff;
+      color: #4f46e5;
+    }
+
+    button.equals {
+      background: #10b981;
+      color: #ffffff;
+      font-size: 26px;
+    }
+
+    button.equals:hover {
+      background: #34d399;
+    }
+
+    button.zero {
+      grid-column: span 2;
+      border-radius: 34px;
+      justify-content: flex-start;
+      padding-left: 28px;
+    }
+
+    button.span-2 {
+      grid-column: span 2;
+      border-radius: 34px;
+      justify-content: flex-start;
+      padding-left: 28px;
+    }
+
+    @media (max-width: 420px) {
+      .calculator {
+        padding: 18px 14px 14px;
+        border-radius: 22px;
+      }
+      button {
+        height: 60px;
+        font-size: 19px;
+      }
+      .display {
+        font-size: 42px;
+        min-height: 62px;
+      }
+      .display.error {
+        font-size: 28px;
+      }
+      .buttons {
+        gap: 9px;
+      }
+    }
+
+    @media (max-width: 340px) {
+      button {
+        height: 52px;
+        font-size: 17px;
+      }
+      .display {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator" role="application" aria-label="Calculator">
+    <div class="history" id="history" aria-live="polite"></div>
+    <div class="display" id="display" aria-live="polite" aria-atomic="true">0</div>
+
+    <div class="buttons" id="buttons">
+      <button class="function" data-action="clear">AC</button>
+      <button class="function" data-action="sign">+/−</button>
+      <button class="function" data-action="percent">%</button>
+      <button class="operator" data-action="operator" data-operator="/">÷</button>
+
+      <button data-action="digit" data-digit="7">7</button>
+      <button data-action="digit" data-digit="8">8</button>
+      <button data-action="digit" data-digit="9">9</button>
+      <button class="operator" data-action="operator" data-operator="*">×</button>
+
+      <button data-action="digit" data-digit="4">4</button>
+      <button data-action="digit" data-digit="5">5</button>
+      <button data-action="digit" data-digit="6">6</button>
+      <button class="operator" data-action="operator" data-operator="-">−</button>
+
+      <button data-action="digit" data-digit="1">1</button>
+      <button data-action="digit" data-digit="2">2</button>
+      <button data-action="digit" data-digit="3">3</button>
+      <button class="operator" data-action="operator" data-operator="+">+</button>
+
+      <button class="zero" data-action="digit" data-digit="0">0</button>
+      <button data-action="decimal">.</button>
+      <button class="equals" data-action="equals">=</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const display = document.getElementById('display');
+      const history = document.getElementById('history');
+      const buttonsContainer = document.getElementById('buttons');
+
+      const state = {
+        currentInput: '0',
+        previousValue: null,
+        operator: null,
+        waitingForOperand: false,
+        lastOperand: null,
+        lastOperator: null,
+        justEvaluated: false,
+        error: false
+      };
+
+      const MAX_DIGITS = 15;
+
+      function formatNumber(numStr) {
+        if (numStr === 'Error' || numStr === '∞' || numStr === '-∞' || numStr === 'NaN') return numStr;
+
+        let [intPart, decPart] = numStr.split('.');
+        const negative = intPart.startsWith('-');
+        if (negative) intPart = intPart.slice(1);
+
+        intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        let result = (negative ? '-' : '') + intPart;
+        if (decPart !== undefined) result += '.' + decPart;
+        return result;
+      }
+
+      function updateDisplay() {
+        if (state.error) {
+          display.textContent = 'Error';
+          display.classList.add('error');
+          return;
+        }
+        display.classList.remove('error');
+        let raw = state.currentInput;
+
+        if (raw.includes('e') || raw.includes('E')) {
+          display.textContent = raw;
+          return;
+        }
+
+        if (raw === '0' && !raw.includes('.')) {
+          display.textContent = '0';
+          return;
+        }
+
+        const endsWithDot = raw.endsWith('.');
+        let text = formatNumber(raw);
+        if (endsWithDot) text += '.';
+
+        display.textContent = text;
+
+        const len = display.textContent.length;
+        if (len > 12) display.style.fontSize = '34px';
+        else if (len > 9) display.style.fontSize = '42px';
+        else display.style.fontSize = '';
+      }
+
+      function updateHistory(text) {
+        history.textContent = text || '';
+      }
+
+      function resetError() {
+        if (state.error) {
+          state.currentInput = '0';
+          state.previousValue = null;
+          state.operator = null;
+          state.waitingForOperand = false;
+          state.error = false;
+          state.justEvaluated = false;
+          display.classList.remove('error');
+          updateDisplay();
+        }
+      }
+
+      function inputDigit(digit) {
+        resetError();
+
+        if (state.waitingForOperand) {
+          state.currentInput = digit;
+          state.waitingForOperand = false;
+        } else {
+          if (state.justEvaluated) {
+            state.currentInput = digit;
+            state.previousValue = null;
+            state.operator = null;
+            state.justEvaluated = false;
+            updateHistory('');
+          } else if (state.currentInput === '0') {
+            state.currentInput = digit;
+          } else {
+            const digitCount = state.currentInput.replace(/[-.]/g, '').length;
+            if (digitCount >= MAX_DIGITS) return;
+            state.currentInput += digit;
+          }
+        }
+        updateDisplay();
+      }
+
+      function inputDecimal() {
+        resetError();
+
+        if (state.waitingForOperand) {
+          state.currentInput = '0.';
+          state.waitingForOperand = false;
+        } else if (state.justEvaluated) {
+          state.currentInput = '0.';
+          state.previousValue = null;
+          state.operator = null;
+          state.justEvaluated = false;
+          updateHistory('');
+        } else if (!state.currentInput.includes('.')) {
+          state.currentInput += '.';
+        }
+        updateDisplay();
+      }
+
+      function clearAll() {
+        state.currentInput = '0';
+        state.previousValue = null;
+        state.operator = null;
+        state.waitingForOperand = false;
+        state.lastOperand = null;
+        state.lastOperator = null;
+        state.justEvaluated = false;
+        state.error = false;
+        updateHistory('');
+        display.classList.remove('error');
+        updateDisplay();
+      }
+
+      function toggleSign() {
+        resetError();
+        if (state.currentInput === '0' || state.currentInput === 'Error') return;
+
+        if (state.currentInput.startsWith('-')) {
+          state.currentInput = state.currentInput.slice(1);
+        } else {
+          state.currentInput = '-' + state.currentInput;
+        }
+        updateDisplay();
+      }
+
+      function percent() {
+        resetError();
+        const value = parseFloat(state.currentInput);
+        if (isNaN(value)) return;
+
+        let result;
+        if (state.previousValue !== null && state.operator) {
+          result = (state.previousValue * value) / 100;
+        } else {
+          result = value / 100;
+        }
+
+        state.currentInput = String(result);
+        updateDisplay();
+      }
+
+      function compute(a, b, op) {
+        switch (op) {
+          case '+': return a + b;
+          case '-': return a - b;
+          case '*': return a * b;
+          case '/':
+            if (b === 0) return { error: 'Cannot divide by zero' };
+            return a / b;
+          default: return b;
+        }
+      }
+
+      function setOperator(nextOperator) {
+        resetError();
+
+        const inputValue = parseFloat(state.currentInput);
+
+        if (state.error) return;
+
+        if (state.previousValue === null) {
+          state.previousValue = inputValue;
+        } else if (!state.waitingForOperand) {
+          const result = compute(state.previousValue, inputValue, state.operator);
+
+          if (typeof result === 'object' && result.error) {
+            state.error = true;
+            state.currentInput = 'Error';
+            updateDisplay();
+            updateHistory('');
+            return;
+          }
+
+          state.previousValue = result;
+          state.currentInput = String(result);
+        }
+
+        state.waitingForOperand = true;
+        state.operator = nextOperator;
+        state.justEvaluated = false;
+
+        const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[nextOperator];
+        updateHistory(`${formatNumber(String(state.previousValue))} ${opSymbol}`);
+        updateDisplay();
+        highlightOperator(nextOperator);
+      }
+
+      function highlightOperator(op) {
+        document.querySelectorAll('.operator').forEach(btn => {
+          btn.classList.remove('active-operator');
+          if (btn.dataset.operator === op && !state.waitingForOperand) {
+            btn.classList.add('active-operator');
+          }
+          if (btn.dataset.operator === op && state.waitingForOperand) {
+            btn.classList.add('active-operator');
+          }
+        });
+      }
+
+      function clearOperatorHighlight() {
+        document.querySelectorAll('.operator').forEach(btn => {
+          btn.classList.remove('active-operator');
+        });
+      }
+
+      function equals() {
+        resetError();
+
+        const inputValue = parseFloat(state.currentInput);
+        let result;
+
+        if (state.operator && state.previousValue !== null) {
+          result = compute(state.previousValue, inputValue, state.operator);
+
+          if (typeof result === 'object' && result.error) {
+            state.error = true;
+            state.currentInput = 'Error';
+            updateDisplay();
+            updateHistory('');
+            clearOperatorHighlight();
+            return;
+          }
+
+          state.lastOperand = inputValue;
+          state.lastOperator = state.operator;
+
+          const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[state.operator];
+          updateHistory(`${formatNumber(String(state.previousValue))} ${opSymbol} ${formatNumber(String(inputValue))} =`);
+
+          state.currentInput = String(result);
+          state.previousValue = null;
+          state.operator = null;
+          state.waitingForOperand = false;
+          state.justEvaluated = true;
+        } else if (state.lastOperator && state.lastOperand !== null) {
+          result = compute(inputValue, state.lastOperand, state.lastOperator);
+
+          if (typeof result === 'object' && result.error) {
+            state.error = true;
+            state.currentInput = 'Error';
+            updateDisplay();
+            updateHistory('');
+            clearOperatorHighlight();
+            return;
+          }
+
+          const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[state.lastOperator];
+          updateHistory(`${formatNumber(String(inputValue))} ${opSymbol} ${formatNumber(String(state.lastOperand))} =`);
+
+          state.currentInput = String(result);
+          state.justEvaluated = true;
+        } else {
+          updateHistory(`${formatNumber(state.currentInput)} =`);
+          state.justEvaluated = true;
+        }
+
+        clearOperatorHighlight();
+        updateDisplay();
+      }
+
+      function handleButtonClick(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+
+        switch (action) {
+          case 'digit':
+            inputDigit(btn.dataset.digit);
+            break;
+          case 'decimal':
+            inputDecimal();
+            break;
+          case 'clear':
+            clearAll();
+            break;
+          case 'sign':
+            toggleSign();
+            break;
+          case 'percent':
+            percent();
+            break;
+          case 'operator':
+            setOperator(btn.dataset.operator);
+            break;
+          case 'equals':
+            equals();
+            break;
+        }
+      }
+
+      buttonsContainer.addEventListener('click', handleButtonClick);
+
+      const keyMap = {
+        '0': { action: 'digit', digit: '0' },
+        '1': { action: 'digit', digit: '1' },
+        '2': { action: 'digit', digit: '2' },
+        '3': { action: 'digit', digit: '3' },
+        '4': { action: 'digit', digit: '4' },
+        '5': { action: 'digit', digit: '5' },
+        '6': { action: 'digit', digit: '6' },
+        '7': { action: 'digit', digit: '7' },
+        '8': { action: 'digit', digit: '8' },
+        '9': { action: 'digit', digit: '9' },
+        '.': { action: 'decimal' },
+        ',': { action: 'decimal' },
+        '+': { action: 'operator', operator: '+' },
+        '-': { action: 'operator', operator: '-' },
+        '*': { action: 'operator', operator: '*' },
+        'x': { action: 'operator', operator: '*' },
+        'X': { action: 'operator', operator: '*' },
+        '/': { action: 'operator', operator: '/' },
+        '=': { action: 'equals' },
+        'Enter': { action: 'equals' },
+        'Backspace': { action: 'backspace' },
+        'Escape': { action: 'clear' },
+        'Delete': { action: 'clear' },
+        '%': { action: 'percent' }
+      };
+
+      document.addEventListener('keydown', (e) => {
+        const mapped = keyMap[e.key];
+
+        if (mapped) {
+          e.preventDefault();
+
+          const btn = findButtonByAction(mapped);
+          if (btn) {
+            btn.classList.add('pressed');
+            setTimeout(() => btn.classList.remove('pressed'), 100);
+          }
+
+          switch (mapped.action) {
+            case 'digit':
+              inputDigit(mapped.digit);
+              break;
+            case 'decimal':
+              inputDecimal();
+              break;
+            case 'clear':
+              clearAll();
+              break;
+            case 'operator':
+              setOperator(mapped.operator);
+              break;
+            case 'equals':
+              equals();
+              break;
+            case 'percent':
+              percent();
+              break;
+            case 'backspace':
+              handleBackspace();
+              break;
+          }
+        }
+      });
+
+      function findButtonByAction(mapped) {
+        if (mapped.action === 'digit') {
+          return document.querySelector(`button[data-digit="${mapped.digit}"]`);
+        }
+        if (mapped.action === 'operator') {
+          return document.querySelector(`button[data-operator="${mapped.operator}"]`);
+        }
+        if (mapped.action === 'equals') {
+          return document.querySelector('button[data-action="equals"]');
+        }
+        if (mapped.action === 'clear') {
+          return document.querySelector('button[data-action="clear"]');
+        }
+        if (mapped.action === 'decimal') {
+          return document.querySelector('button[data-action="decimal"]');
+        }
+        if (mapped.action === 'percent') {
+          return document.querySelector('button[data-action="percent"]');
+        }
+        return null;
+      }
+
+      function handleBackspace() {
+        resetError();
+        if (state.waitingForOperand) return;
+        if (state.justEvaluated) {
+          clearAll();
+          return;
+        }
+        if (state.currentInput.length === 1 || (state.currentInput.length === 2 && state.currentInput.startsWith('-'))) {
+          state.currentInput = '0';
+        } else {
+          state.currentInput = state.currentInput.slice(0, -1);
+          if (state.currentInput === '-' || state.currentInput === '') {
+            state.currentInput = '0';
+          }
+        }
+        updateDisplay();
+      }
+
+      updateDisplay();
+      updateHistory('');
+    })();
+  </script>
+</body>
+</html>
