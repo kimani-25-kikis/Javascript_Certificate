@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp replica · demo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #111b21;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .phone {
+      width: 360px;
+      height: 720px;
+      background: #0b141a;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 8px #1f2c34;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .status-bar {
+      background: #1f2c34;
+      color: #e9edef;
+      padding: 10px 16px 6px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .chat-header {
+      background: #1f2c34;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #2a3942;
+      color: #e9edef;
+    }
+
+    .back-icon {
+      font-size: 20px;
+      color: #aebac1;
+      margin-right: 2px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      background: #00a884;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+      color: #111b21;
+      flex-shrink: 0;
+    }
+
+    .contact-info {
+      flex: 1;
+    }
+
+    .contact-name {
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .contact-status {
+      font-size: 13px;
+      color: #8696a0;
+    }
+
+    .header-icons {
+      display: flex;
+      gap: 18px;
+      color: #aebac1;
+      font-size: 20px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      background: #0b141a;
+      padding: 16px 12px 8px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #2a3942;
+      border-radius: 4px;
+    }
+
+    .message {
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 2px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.incoming {
+      align-self: flex-start;
+    }
+
+    .message.outgoing {
+      align-self: flex-end;
+    }
+
+    .bubble {
+      padding: 8px 12px 6px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      position: relative;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+      color: #e9edef;
+    }
+
+    .incoming .bubble {
+      background: #1f2c34;
+      border-top-left-radius: 4px;
+    }
+
+    .outgoing .bubble {
+      background: #005c4b;
+      border-top-right-radius: 4px;
+    }
+
+    .message-meta {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      margin-top: 2px;
+      color: #8696a0;
+    }
+
+    .outgoing .message-meta {
+      color: #a0c6b9;
+    }
+
+    .double-check {
+      color: #53bdeb;
+      font-size: 12px;
+    }
+
+    .date-badge {
+      align-self: center;
+      background: #1f2c34;
+      color: #8696a0;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .chat-input-area {
+      background: #1f2c34;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid #2a3942;
+    }
+
+    .emoji-btn, .attach-btn {
+      background: transparent;
+      border: none;
+      color: #8696a0;
+      font-size: 24px;
+      padding: 4px 6px;
+      cursor: pointer;
+      transition: 0.1s;
+      border-radius: 50%;
+    }
+
+    .emoji-btn:hover, .attach-btn:hover {
+      background: #2a3942;
+      color: #d1d7db;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      background: #2a3942;
+      border-radius: 24px;
+      padding: 8px 16px;
+    }
+
+    .input-wrapper input {
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 100%;
+      color: #e9edef;
+      font-size: 15px;
+    }
+
+    .input-wrapper input::placeholder {
+      color: #8696a0;
+    }
+
+    .send-btn {
+      background: #00a884;
+      border: none;
+      color: #111b21;
+      font-size: 20px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+      flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .send-btn:hover {
+      background: #06cf9c;
+      transform: scale(1.02);
+    }
+
+    .send-btn:active {
+      transform: scale(0.96);
+    }
+
+    .chat-messages {
+      scrollbar-width: thin;
+      scrollbar-color: #2a3942 #0b141a;
+    }
+
+    .hint {
+      text-align: center;
+      font-size: 10px;
+      color: #3b4a54;
+      padding: 4px 0 0;
+      letter-spacing: 0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span><i class="fas fa-signal"></i> <i class="fas fa-wifi"></i> <i class="fas fa-battery-full"></i></span>
+    </div>
+
+    <div class="chat-header">
+      <i class="fas fa-arrow-left back-icon"></i>
+      <div class="avatar">A</div>
+      <div class="contact-info">
+        <div class="contact-name">
+          Alex Rivera
+          <i class="fas fa-check-circle" style="font-size: 12px; color: #00a884;"></i>
+        </div>
+        <div class="contact-status">online</div>
+      </div>
+      <div class="header-icons">
+        <i class="fas fa-video"></i>
+        <i class="fas fa-phone-alt"></i>
+        <i class="fas fa-ellipsis-v"></i>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="date-badge">TODAY</div>
+
+      <div class="message incoming">
+        <div class="bubble">
+          Hey! How's the new project going? 🚀
+          <div class="message-meta">
+            <span>10:30 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="message outgoing">
+        <div class="bubble">
+          Pretty good! Just finished the UI mockups.
+          <div class="message-meta">
+            <span>10:32 AM</span>
+            <i class="fas fa-check-double double-check"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="message incoming">
+        <div class="bubble">
+          Nice! Can you send them over?
+          <div class="message-meta">
+            <span>10:33 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="message outgoing">
+        <div class="bubble">
+          Sure, I'll share the Figma link in a bit. Also, do you want to grab coffee later? ☕
+          <div class="message-meta">
+            <span>10:35 AM</span>
+            <i class="fas fa-check-double double-check"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="message incoming">
+        <div class="bubble">
+          Absolutely! 4pm at the usual place?
+          <div class="message-meta">
+            <span>10:36 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="message outgoing">
+        <div class="bubble">
+          Perfect. See you then! 👋
+          <div class="message-meta">
+            <span>10:37 AM</span>
+            <i class="fas fa-check-double double-check"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <button class="emoji-btn" id="emojiBtn" aria-label="emoji"><i class="far fa-smile"></i></button>
+      <button class="attach-btn" id="attachBtn" aria-label="attach"><i class="fas fa-paperclip"></i></button>
+      <div class="input-wrapper">
+        <input type="text" id="messageInput" placeholder="Type a message" autocomplete="off">
+      </div>
+      <button class="send-btn" id="sendBtn" aria-label="send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+    <div class="hint">WhatsApp replica · interactive demo</div>
+  </div>
+
+  <script>
+    (function() {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageInput = document.getElementById('messageInput');
+      const sendBtn = document.getElementById('sendBtn');
+      const emojiBtn = document.getElementById('emojiBtn');
+      const attachBtn = document.getElementById('attachBtn');
+
+      function getCurrentTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${hours}:${minutes} ${ampm}`;
+      }
+
+      function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function addOutgoingMessage(text) {
+        if (!text.trim()) return;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message outgoing';
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'bubble';
+        bubbleDiv.textContent = text;
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'message-meta';
+        metaDiv.innerHTML = `<span>${getCurrentTime()}</span><i class="fas fa-check-double double-check"></i>`;
+        bubbleDiv.appendChild(metaDiv);
+        messageDiv.appendChild(bubbleDiv);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+      }
+
+      function addIncomingMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message incoming';
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'bubble';
+        bubbleDiv.textContent = text;
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'message-meta';
+        metaDiv.innerHTML = `<span>${getCurrentTime()}</span>`;
+        bubbleDiv.appendChild(metaDiv);
+        messageDiv.appendChild(bubbleDiv);
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+      }
+
+      function getAutoReply(userMessage) {
+        const msg = userMessage.toLowerCase().trim();
+        if (msg.includes('coffee') || msg.includes('☕')) {
+          return 'I could really use a coffee right now 😄';
+        } else if (msg.includes('project') || msg.includes('work')) {
+          return 'The project is coming along nicely!';
+        } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+          return 'Hey there! 👋';
+        } else if (msg.includes('?')) {
+          return 'Good question — let me check and get back to you.';
+        } else if (msg.includes('thanks') || msg.includes('thank')) {
+          return 'Anytime! 🙌';
+        } else if (msg.includes('bye') || msg.includes('see you')) {
+          return 'Talk to you later! 👋';
+        } else if (msg.length < 3) {
+          return '👍';
+        } else {
+          const replies = [
+            'Got it!',
+            'Interesting, tell me more.',
+            'Sounds good to me.',
+            'I agree 👍',
+            'Let me think about that.',
+            'Cool!',
+            'Sure thing.',
+            'Haha, nice one!',
+            'Really? That’s awesome.',
+            'Okay, let’s do it.'
+          ];
+          return replies[Math.floor(Math.random() * replies.length)];
+        }
+      }
+
+      function handleSend() {
+        const text = messageInput.value.trim();
+        if (text === '') return;
+        addOutgoingMessage(text);
+        messageInput.value = '';
+        messageInput.focus();
+        const delay = 400 + Math.floor(Math.random() * 500);
+        setTimeout(() => {
+          const reply = getAutoReply(text);
+          addIncomingMessage(reply);
+        }, delay);
+      }
+
+      sendBtn.addEventListener('click', handleSend);
+
+      messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+
+      emojiBtn.addEventListener('click', () => {
+        messageInput.value += ' 😊';
+        messageInput.focus();
+      });
+
+      attachBtn.addEventListener('click', () => {
+        messageInput.value += ' 📎 document.pdf';
+        messageInput.focus();
+      });
+
+      messageInput.focus();
+      scrollToBottom();
+    })();
+  </script>
+</body>
+</html>
