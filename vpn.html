@@ -42,7 +42,6 @@
         radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.08), transparent 45%);
     }
 
-    /* ===== APP WINDOW ===== */
     .app {
       width: 100%;
       max-width: 1180px;
@@ -56,7 +55,6 @@
       overflow: hidden;
     }
 
-    /* ===== SIDEBAR ===== */
     .sidebar {
       background: #0e1422;
       border-right: 1px solid var(--border);
@@ -212,14 +210,12 @@
       margin-top: 1px;
     }
 
-    /* ===== MAIN ===== */
     .main {
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* Top bar */
     .topbar {
       padding: 16px 24px;
       border-bottom: 1px solid var(--border);
@@ -311,7 +307,6 @@
       50% { opacity: 0.6; box-shadow: 0 0 16px var(--accent); }
     }
 
-    /* Content scroll area */
     .content {
       flex: 1;
       overflow-y: auto;
@@ -322,7 +317,6 @@
     .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     .content::-webkit-scrollbar-track { background: transparent; }
 
-    /* ===== PAGES ===== */
     .page { display: none; }
     .page.active { display: block; animation: fadeIn 0.25s ease; }
 
@@ -331,7 +325,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ===== CONNECT HERO ===== */
     .connect-hero {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -343,7 +336,6 @@
       .connect-hero { grid-template-columns: 1fr; }
     }
 
-    /* Connect button card */
     .connect-card {
       background: linear-gradient(160deg, #151d30, #101828);
       border: 1px solid var(--border);
@@ -374,7 +366,6 @@
 
     .connect-card.connected::before { opacity: 1; }
 
-    /* Big power button */
     .power-btn {
       width: 150px;
       height: 150px;
@@ -464,7 +455,6 @@
 
     .current-server .flag { font-size: 17px; }
 
-    /* ===== STATS PANEL ===== */
     .stats-panel {
       display: flex;
       flex-direction: column;
@@ -543,7 +533,6 @@
       gap: 16px;
     }
 
-    /* ===== MAP SECTION ===== */
     .map-section {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -603,7 +592,6 @@
         radial-gradient(circle at 70% 70%, rgba(0, 229, 160, 0.05), transparent 30%);
     }
 
-    /* Simple world map outline via SVG data-uri */
     .world-map::before {
       content: '';
       position: absolute;
@@ -614,7 +602,6 @@
       opacity: 0.7;
     }
 
-    /* Server nodes */
     .server-node {
       position: absolute;
       width: 14px;
@@ -681,7 +668,6 @@
 
     .server-node:hover .node-tooltip { opacity: 1; }
 
-    /* ===== SERVER LIST ===== */
     .server-list-header {
       display: flex;
       justify-content: space-between;
@@ -850,7 +836,6 @@
     .load-mid { background: var(--warning); }
     .load-high { background: var(--danger); }
 
-    /* ===== SETTINGS PAGE ===== */
     .settings-group {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -897,7 +882,6 @@
       color: var(--text-muted);
     }
 
-    /* Toggle */
     .toggle {
       position: relative;
       width: 44px;
@@ -933,7 +917,6 @@
       box-shadow: 0 0 10px rgba(0, 229, 160, 0.5);
     }
 
-    /* Segmented control */
     .segmented {
       display: flex;
       background: var(--bg-hover);
@@ -961,7 +944,6 @@
       color: #062b23;
     }
 
-    /* ===== TOAST ===== */
     .toast {
       position: fixed;
       bottom: 28px;
@@ -992,7 +974,6 @@
     .toast.danger { border-left-color: var(--danger); }
     .toast.danger i { color: var(--danger); }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 860px) {
       .app {
         grid-template-columns: 1fr;
@@ -1034,7 +1015,6 @@
 </head>
 <body>
   <div class="app">
-    <!-- ===== SIDEBAR ===== -->
     <aside class="sidebar">
       <div class="logo">
         <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
@@ -1064,16 +1044,14 @@
         <div class="user-card">
           <div class="user-avatar">JD</div>
           <div class="user-info">
-            <div class="name">Jane Doe</div>
+            <div class="name">Joshua Ngigi</div>
             <div class="plan">Premium</div>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- ===== MAIN ===== -->
     <main class="main">
-      <!-- Top bar -->
       <div class="topbar">
         <div class="topbar-title">
           <h2 id="pageTitle">Connect</h2>
@@ -1088,16 +1066,35 @@
         </div>
       </div>
 
-      <!-- Content -->
       <div class="content">
-        <!-- ===== CONNECT PAGE ===== -->
         <div class="page active" id="page-connect">
           <div class="connect-hero">
-            <!-- Power button -->
             <div class="connect-card" id="connectCard">
               <button class="power-btn" id="powerBtn" aria-label="Connect">
                 <i class="fas fa-power-off"></i>
               </button>
               <div class="connect-status" id="connectStatus">Not Connected</div>
               <div class="connect-sub" id="connectSub">Your connection is not protected</div>
-              <
+              <div class="current-server" id="currentServer">
+                <span class="flag">🇺🇸</span>
+                <span id="currentServerName">United States · New York</span>
+              </div>
+            </div>
+
+            <div class="stats-panel">
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <span class="label">Download</span>
+                  <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stat-value" id="downloadSpeed">0.00<small>Mbps</small></div>
+                <div class="stat-bar"><div class="stat-bar-fill" id="downloadBar"></div></div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <span class="label">Upload</span>
+                  <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-value" id="uploadSpeed">0.00<small>Mbps</small></div>
+                <div class="stat-bar"><div class="stat-bar-f
