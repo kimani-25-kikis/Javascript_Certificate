@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boardroom · Kanban</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #101418;
+      --bg-rail: #161c22;
+      --bg-col: #1b2229;
+      --bg-card: #232b34;
+      --bg-card-hover: #2b343f;
+      --bg-input: #12181e;
+      --border: #2d3843;
+      --border-soft: #232c35;
+      --text: #e9eef3;
+      --text-mid: #a3b0bc;
+      --text-dim: #6c7a87;
+      --accent: #d97757;
+      --accent-soft: #eaa583;
+      --teal: #4ba58c;
+      --yellow: #d4a94a;
+      --red: #d9635c;
+      --blue: #5a8fc7;
+      --violet: #8b7bb8;
+      --green: #6ba368;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 50% -20%, rgba(217, 119, 87, 0.09), transparent 60%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .board-bar {
+      flex-shrink: 0;
+      padding: 14px 22px;
+      background: var(--bg-rail);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+
+    .board-mark {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .mark-glyph {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(145deg, var(--accent), #b85a3d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      font-size: 15px;
+      color: #1a0d07;
+      font-weight: 800;
+      box-shadow: 0 3px 10px rgba(217, 119, 87, 0.3);
+    }
+
+    .mark-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mark-text strong {
+      font-size: 14px;
+      letter-spacing: 0.3px;
+    }
+
+    .mark-text small {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 340px;
+      min-width: 180px;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      fill: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 9px 12px 9px 34px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: 0.15s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
+    }
+
+    .search-wrap input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .bar-actions {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--bg-col);
+      color: var(--text-mid);
+      padding: 8px 14px;
+      border-radius: 3px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-card);
+      color: var(--text);
+      border-color: #3d4956;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #1a0d07;
+      border-color: var(--accent);
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent-soft);
+      color: #1a0d07;
+    }
+
+    .board-scroll {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 20px 22px 24px;
+    }
+
+    .board-scroll::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .board-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .board-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+
+    .board-scroll::-webkit-scrollbar-thumb:hover {
+      background: #3d4956;
+    }
+
+    .board {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      min-height: 100%;
+      width: max-content;
+      padding-bottom: 4px;
+    }
+
+    .col {
+      width: 288px;
+      flex-shrink: 0;
+      background: var(--bg-col);
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 148px);
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .col.drag-over {
+      border-color: var(--accent);
+      background: #1e262d;
+    }
+
+    .col-head {
+      padding: 13px 14px 11px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .col-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .col-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      flex: 1;
+      cursor: text;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      border-radius: 2px;
+      outline: none;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .col-title:focus {
+      background: var(--bg-input);
+      color: var(--text);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .col-count {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+      background: var(--bg-input);
+      padding: 2px 7px;
+      border-radius: 2px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    .col-menu {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 3px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+
+    .col-menu:hover {
+      background: var(--bg-card);
+      color: var(--red);
+    }
+
+    .col-menu svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .col-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 10px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 60px;
+    }
+
+    .col-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .col-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: 3px;
+      padding: 11px 12px 10px;
+      cursor: grab;
+      transition: background 0.12s, border-color 0.12s, transform 0.12s;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: #3a4753;
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card.dragging {
+      opacity: 0.4;
+      transform: rotate(1.5deg);
+    }
+
+    .card-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .card-labels:empty {
+      display: none;
+    }
+
+    .label-chip {
+      height: 6px;
+      border-radius: 2px;
+      width: 34px;
+    }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--text);
+      word-break: break-word;
+      outline: none;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.45;
+      margin-top: 5px;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-desc:empty {
+      display: none;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card-meta:empty {
+      display: none;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meta-item svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .meta-due.overdue {
+      color: var(--red);
+    }
+
+    .meta-due.soon {
+      color: var(--yellow);
+    }
+
+    .meta-checklist {
+      margin-left: auto;
+    }
+
+    .check-progress {
+      width: 56px;
+      height: 3px;
+      background: var(--bg-input);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .check-progress span {
+      display: block;
+      height: 100%;
+      background: var(--teal);
+      border-radius: 2px;
+      transition: width 0.25s;
+    }
+
+    .card-priority {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .add-card {
+      margin: 0 10px 10px;
+      padding: 9px 12px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.15s;
+      flex-shrink: 0;
+    }
+
+    .add-card:hover {
+      background: var(--bg-card);
+      color: var(--text);
+      border-color: #3d4956;
+      border-style: solid;
+    }
+
+    .add-card svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .composer {
+      margin: 0 10px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    .composer textarea,
+    .composer input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 10px;
+      outline: none;
+      resize: none;
+      transition: 0.15s;
+    }
+
+    .composer textarea {
+      min-height: 54px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .composer input {
+      margin-bottom: 8px;
+      font-size: 12.5px;
+    }
+
+    .composer textarea:focus,
+    .composer input:focus {
+      border-color: var(--accent);
+    }
+
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .composer-row .btn {
+      padding: 7px 13px;
+      font-size: 12px;
+    }
+
+    .composer-row .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-dim);
+    }
+
+    .composer-row .btn-ghost:hover {
+      background: var(--bg-input);
+      color: var(--text);
+    }
+
+    .add-col {
+      width: 288px;
+      flex-shrink: 0;
+      background: rgba(27, 34, 41, 0.5);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 13px 14px;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      transition: 0.15s;
+      align-self: flex-start;
+    }
+
+    .add-col:hover {
+      background: var(--bg-col);
+      border-color: #3d4956;
+      border-style: solid;
+      color: var(--text);
+    }
+
+    .add-col svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .col-input {
+      width: 288px;
+      flex-shrink: 0;
+      background: var(--bg-col);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-self: flex-start;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    .col-input input {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .col-input input:focus {
+      border-color: var(--accent);
+    }
+
+    .col-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .col-input-row .btn {
+      padding: 7px 13px;
+      font-size: 12px;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 10, 0.72);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      z-index: 900;
+      padding: 48px 20px 20px;
+      overflow-y: auto;
+    }
+
+    .modal-mask.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-col);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      width: 100%;
+      max-width: 660px;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.7);
+      animation: modalIn 0.22s cubic-bezier(0.3, 1.3, 0.5, 1);
+      overflow: hidden;
+    }
+
+    @keyframes modalIn {
+      from { transform: translateY(-14px) scale(0.98); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-head .col-dot {
+      width: 10px;
+      height: 10px;
+    }
+
+    .modal-head-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .modal-head-info small {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .modal-head-info h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      width: 30px;
+      height: 30px;
+      border-radius: 3px;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-input);
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 24px;
+    }
+
+    @media (max-width: 620px) {
+      .modal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .field-label svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    .field-input,
+    .field-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13.5px;
+      padding: 9px 11px;
+      outline: none;
+      transition: 0.15s;
+    }
+
+    .field-textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .field-input:focus,
+    .field-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
+    }
+
+    .label-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .label-pick {
+      height: 20px;
+      width: 42px;
+      border-radius: 3px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.15s;
+      position: relative;
+    }
+
+    .label-pick:hover {
+      transform: scale(1.08);
+    }
+
+    .label-pick.on {
+      border-color: #fff;
+    }
+
+    .label-pick.on::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      border-radius: 1px;
+    }
+
+    .label-pick.on::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 9px;
+      height: 5px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: translate(-50%, -70%) rotate(-45deg);
+      z-index: 2;
+    }
+
+    .priority-picker {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .prio-pick {
+      padding: 7px 4px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: 0.15s;
+      text-align: center;
+    }
+
+    .prio-pick:hover {
+      border-color: #3d4956;
+      color: var(--text);
+    }
+
+    .prio-pick.on {
+      border-color: currentColor;
+    }
+
+    .prio-pick[data-prio="none"].on { color: var(--text-mid); background: rgba(163,176,188,0.08); }
+    .prio-pick[data-prio="low"].on { color: var(--teal); background: rgba(75,165,140,0.1); }
+    .prio-pick[data-prio="medium"].on { color: var(--yellow); background: rgba(212,169,74,0.1); }
+    .prio-pick[data-prio="high"].on { color: var(--red); background: rgba(217,99,92,0.1); }
+
+    .due-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .due-row input {
+      flex: 1;
+    }
+
+    .due-clear {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 3px;
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: 0.15s;
+    }
+
+    .due-clear:hover {
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-soft);
+      border-radius: 3px;
+      transition: 0.12s;
+    }
+
+    .check-item:hover {
+      border-color: var(--border);
+    }
+
+    .check-box {
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid var(--text-dim);
+      border-radius: 3px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+      background: transparent;
+      padding: 0;
+    }
+
+    .check-box svg {
+      width: 10px;
+      height: 10px;
+      fill: #101418;
+      opacity: 0;
+      transition: 0.15s;
+    }
+
+    .check-item.done .check-box {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .check-item.done .check-box svg {
+      opacity: 1;
+    }
+
+    .check-text {
+      flex: 1;
+      font-size: 12.5px;
+      color: var(--text);
+      outline: none;
+      word-break: break-word;
+      min-width: 0;
+    }
+
+    .check-item.done .check-text {
+      color: var(--text-dim);
+      text-decoration: line-through;
+    }
+
+    .check-del {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px 5px;
+      border-radius: 2px;
+      transition: 0.15s;
+      opacity: 0;
+    }
+
+    .check-item:hover .check-del {
+      opacity: 1;
+    }
+
+    .check-del:hover {
+      color: var(--red);
+      background: rgba(217,99,92,0.1);
+    }
+
+    .check-add {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .check-add input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12.5px;
+      padding: 7px 10px;
+      outline: none;
+    }
+
+    .check-add input:focus {
+      border-color: var(--accent);
+    }
+
+    .check-add button {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      border-radius: 3px;
+      padding: 0 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      transition: 0.15s;
+    }
+
+    .check-add button:hover {
+      background: var(--bg-card-hover);
+      color: var(--text);
+    }
+
+    .modal-foot {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-soft);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(0,0,0,0.12);
+    }
+
+    .modal-foot-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: rgba(217, 99, 92, 0.4);
+      color: var(--red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(217, 99, 92, 0.1);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .empty-hint {
+      padding: 20px 12px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      border: 1px dashed var(--border-soft);
+      border-radius: 3px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translate(-50%, 80px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.6);
+      opacity: 0;
+      transition: 0.3s cubic-bezier(0.3, 1.3, 0.5, 1);
+      z-index: 1200;
+      font-size: 13px;
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    .toast svg {
+      width: 15px;
+      height: 15px;
+      fill: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .toast.danger {
+      border-left-color: var(--red);
+    }
+
+    .toast.danger svg {
+      fill: var(--red);
+    }
+
+    @media (max-width: 640px) {
+      .board-bar {
+        padding: 12px 14px;
+        gap: 12px;
+      }
+      .board-scroll {
+        padding: 14px;
+      }
+      .mark-text small {
+        display: none;
+      }
+      .col {
+        width: 260px;
+        max-height: calc(100vh - 190px);
+      }
+      .add-col, .col-input {
+        width: 260px;
+      }
+      .bar-actions .btn span {
+        display: none;
+      }
+      .bar-actions .btn {
+        padding: 8px 10px;
+      }
+      .modal-mask {
+        padding: 20px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="board-bar">
+    <div class="board-mark">
+      <div class="mark-glyph">B</div>
+      <div class="mark-text">
+        <strong>Boardroom</strong>
+        <small>Product · Q3 Cycle</small>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+      <input type="text" id="searchInput" placeholder="Filter cards by title, label, or checklist...">
+    </div>
+
+    <div class="bar-actions">
+      <button class="btn" id="btnReset" title="Reset board to default">
+        <svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>
+        <span>Reset</span>
+      </button>
+      <button class="btn btn-accent" id="btnAddColumn">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+        <span>Column</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="board-scroll">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="modal-mask" id="cardModal">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="col-dot" id="modalDot"></div>
+        <div class="modal-head-info">
+          <small id="modalColName">Column</small>
+          <h3 id="modalCardTitle">Card title</h3>
+        </div>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div>
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M3 17h18v2H3zM3 5h18v2H3zM3 11h18v2H3z"/></svg>
+              Title
+            </div>
+            <input type="text" class="field-input" id="editTitle" placeholder="Card title">
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zM3 11h18v2H3zM3 17h12v2H3z"/></svg>
+              Description
+            </div>
+            <textarea class="field-textarea" id="editDesc" placeholder="Add a more detailed description..."></textarea>
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+              Checklist
+              <span id="checkSummary" style="margin-left:auto;font-weight:600;color:var(--text-mid);letter-spacing:0;"></span>
+            </div>
+            <div class="checklist" id="checklist"></div>
+            <div class="check-add">
+              <input type="text" id="checkInput" placeholder="Add an item and press Enter">
+              <button id="checkAddBtn">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 9.4 8 10 4.6-.6 8-5 8-10V6l-8-4z"/></svg>
+              Labels
+            </div>
+            <div class="label-picker" id="labelPicker"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16v2H4zM4 10h16v2H4zM4 16h10v2H4z"/></svg>
+              Priority
+            </div>
+            <div class="priority-picker" id="priorityPicker">
+              <button class="prio-pick" data-prio="none">None</button>
+              <button class="prio-pick" data-prio="low">Low</button>
+              <button class="prio-pick" data-prio="medium">Med</button>
+              <button class="prio-pick" data-prio="high">High</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">
+              <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14z"/></svg>
+              Due date
+            </div>
+            <div class="due-row">
+              <input type="date" class="field-input" id="editDue">
+              <button class="due-clear" id="dueClear">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-danger" id="deleteCard">
+          <svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/></svg>
+          Delete card
+        </button>
+        <div class="modal-foot-right">
+          <button class="btn" id="cancelEdit">Cancel</button>
+          <button class="btn btn-accent" id="saveEdit">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+    <span id="toastText">Saved</span>
+  </div>
+
+  <script>
+    var STORAGE_KEY = 'boardroom-kanban-v1';
+
+    var LABELS = [
+      { id: 'l1', color: '#d9635c', name: 'Bug' },
+      { id: 'l2', color: '#d4a94a', name: 'Design' },
+      { id: 'l3', color: '#6ba368', name: 'Feature' },
+      { id: 'l4', color: '#5a8fc7', name: 'Backend' },
+      { id: 'l5', color: '#8b7bb8', name: 'Research' },
+      { id: 'l6', color: '#4ba58c', name: 'Docs' },
+      { id: 'l7', color: '#d97757', name: 'Urgent' },
+      { id: 'l8', color: '#7a8a99', name: 'Chore' }
+    ];
+
+    var PRIORITY_COLORS = {
+      none: '#7a8a99',
+      low: '#4ba58c',
+      medium: '#d4a94a',
+      high: '#d9635c'
+    };
+
+    var COL_COLORS = ['#d97757', '#4ba58c', '#5a8fc7', '#d4a94a', '#8b7bb8', '#6ba368'];
+
+    var defaultBoard = function () {
+      return {
+        columns: [
+          {
+            id: 'c1',
+            title: 'Backlog',
+            color: '#7a8a99',
+            cards: [
+              { id: 'k1', title: 'Audit onboarding email sequence', desc: 'Review the 6-step welcome flow and flag any drop-off points.', labels: ['l5'], priority: 'low', due: '', checks: [{ t: 'Pull current metrics', d: true }, { t: 'Draft revised copy', d: false }] },
+              { id: 'k2', title: 'Design system: button states', desc: '', labels: ['l2', 'l3'], priority: 'medium', due: '', checks: [] },
+              { id: 'k3', title: 'Migrate legacy auth tokens', desc: 'Old HMAC tokens need to move to the new JWT scheme before EOL.', labels: ['l4', 'l7'], priority: 'high', due: '', checks: [{ t: 'Write migration script', d: false }] }
+            ]
+          },
+          {
+            id: 'c2',
+            title: 'In Progress',
+            color: '#d4a94a',
+            cards: [
+              { id: 'k4', title: 'Rebuild search indexing pipeline', desc: 'Elastic cluster keeps timing out on large imports. Investigate chunking.', labels: ['l4'], priority: 'high', due: '', checks: [{ t: 'Profile slow queries', d: true }, { t: 'Add retry logic', d: true }, { t: 'Load test with 1M docs', d: false }] },
+              { id: 'k5', title: 'Illustrations for empty states', desc: '', labels: ['l2'], priority: 'low', due: '', checks: [] }
+            ]
+          },
+          {
+            id: 'c3',
+            title: 'Review',
+            color: '#5a8fc7',
+            cards: [
+              { id: 'k6', title: 'PR #482: rate limiter refactor', desc: 'Needs a second pair of eyes on the token bucket edge cases.', labels: ['l4', 'l7'], priority: 'medium', due: '', checks: [{ t: 'Read diff', d: true }, { t: 'Run integration suite', d: true }, { t: 'Leave review comments', d: false }] },
+              { id: 'k7', title: 'Copy review: pricing page', desc: '', labels: ['l1', 'l3'], priority: 'low', due: '', checks: [] }
+            ]
+          },
+          {
+            id: 'c4',
+            title: 'Done',
+            color: '#6ba368',
+            cards: [
+              { id: 'k8', title: 'Ship dark mode toggle', desc: 'Persisted to localStorage, respects prefers-color-scheme on first load.', labels: ['l3'], priority: 'medium', due: '', checks: [{ t: 'Add toggle UI', d: true }, { t: 'Wire up persistence', d: true }, { t: 'QA on Safari', d: true }] },
+              { id: 'k9', title: 'Fix: currency rounding bug', desc: '', labels: ['l1'], priority: 'high', due: '', checks: [] }
+            ]
+          }
+        ]
+      };
+    };
+
+    var state = {
+      columns: [],
+      search: '',
+      editingCardId: null,
+      editingColId: null,
+      tempChecks: [],
+      tempLabels: [],
+      tempPriority: 'none',
+      tempDue: '',
+      composerColId: null,
+      newColOpen: false,
+      dragCardId: null,
+      dragFromColId: null
+    };
+
+    var el = {
+      board: document.getElementById('board'),
+      searchInput: document.getElementById('searchInput'),
+      btnAddColumn: document.getElementById('btnAddColumn'),
+      btnReset: document.getElementById('btnReset'),
+      cardModal: document.getElementById('cardModal'),
+      modalClose: document.getElementById('modalClose'),
+      modalDot: document.getElementById('modalDot'),
+      modalColName: document.getElementById('modalColName'),
+      modalCardTitle: document.getElementById('modalCardTitle'),
+      editTitle: document.getElementById('editTitle'),
+      editDesc: document.getElementById('editDesc'),
+      editDue: document.getElementById('editDue'),
+      dueClear: document.getElementById('dueClear'),
+      checklist: document.getElementById('checklist'),
+      checkInput: document.getElementById('checkInput'),
+      checkAddBtn: document.getElementById('checkAddBtn'),
+      checkSummary: document.getElementById('checkSummary'),
+      labelPicker: document.getElementById('labelPicker'),
+      priorityPicker: document.getElementById('priorityPicker'),
+      deleteCard: document.getElementById('deleteCard'),
+      cancelEdit: document.getElementById('cancelEdit'),
+      saveEdit: document.getElementById('saveEdit'),
+      toast: document.getElementById('toast'),
+      toastText: document.getElementById('toastText')
+    };
+
+    function uid(prefix) {
+      return prefix + '-' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ columns: state.columns }));
+      } catch (e) {}
+    }
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        var data = JSON.parse(raw);
+        if (data && Array.isArray(data.columns) && data.columns.length) {
+          state.columns = data.columns;
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function showToast(text, danger) {
+      el.toastText.textContent = text;
+      el.toast.classList.toggle('danger', !!danger);
+      el.toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () {
+        el.toast.classList.remove('show');
+      }, 2200);
+    }
+
+    function findCard(cardId) {
+      for (var i = 0; i < state.columns.length; i++) {
+        var col = state.columns[i];
+        for (var j = 0; j < col.cards.length; j++) {
+          if (col.cards[j].id === cardId) {
+            return { card: col.cards[j], col: col, colIndex: i, cardIndex: j };
+          }
+        }
+      }
+      return null;
+    }
+
+    function matchesSearch(card) {
+      if (!state.search) return true;
+      var q = state.search.toLowerCase();
+      if (card.title.toLowerCase().indexOf(q) !== -1) return true;
+      if (card.desc && card.desc.toLowerCase().indexOf(q) !== -1) return true;
+      for (var i = 0; i < card.labels.length; i++) {
+        var lbl = LABELS.filter(function (l) { return l.id === card.labels[i]; })[0];
+        if (lbl && lbl.name.toLowerCase().indexOf(q) !== -1) return true;
+      }
+      for (var j = 0; j < card.checks.length; j++) {
+        if (card.checks[j].t.toLowerCase().indexOf(q) !== -1) return true;
+      }
+      return false;
+    }
+
+    function formatDue(dateStr) {
+      if (!dateStr) return '';
+      var parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10);
+    }
+
+    function dueClass(dateStr) {
+      if (!dateStr) return '';
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var d = new Date(dateStr + 'T00:00:00');
+      var diff = Math.round((d - today) / 86400000);
+      if (diff < 0) return 'overdue';
+      if (diff <= 2) return 'soon';
+      return '';
+    }
+
+    function render() {
+      el.board.innerHTML = '';
+
+      state.columns.forEach(function (col) {
+        var colEl = document.createElement('div');
+        colEl.className = 'col';
+        colEl.dataset.colId = col.id;
+
+        var visibleCards = col.cards.filter(matchesSearch);
+
+        var head = document.createElement('div');
+        head.className = 'col-head';
+        head.innerHTML =
+          '<span class="col-dot" style="background:' + col.color + '"></span>' +
+          '<span class="col-title" contenteditable="true" spellcheck="false">' + escapeHtml(col.title) + '</span>' +
+          '<span class="col-count">' + visibleCards.length + '</span>' +
+          '<button class="col-menu" title="Delete column">' +
+            '<svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/></svg>' +
+          '</button>';
+
+        var titleEl = head.querySelector('.col-title');
+        titleEl.addEventListener('blur', function () {
+          var next = titleEl.textContent.trim();
+          if (!next) {
+            titleEl.textContent = col.title;
+            return;
+          }
+          col.title = next;
+          save();
+        });
+        titleEl.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            titleEl.blur();
+          }
+        });
+
+        head.querySelector('.col-menu').addEventListener('click', function () {
+          deleteColumn(col.id);
+        });
+
+        colEl.appendChild(head);
+
+        var body = document.createElement('div');
+        body.className = 'col-body';
+        body.dataset.colId = col.id;
+
+        body.addEventListener('dragover', function (e) {
+          e.preventDefault();
+          colEl.classList.add('drag-over');
+        });
+        body.addEventListener('dragleave', function (e) {
+          if (!body.contains(e.relatedTarget)) {
+            colEl.classList.remove('drag-over');
+          }
+        });
+        body.addEventListener('drop', function (e) {
+          e.preventDefault();
+          colEl.classList.remove('drag-over');
+          if (state.dragCardId && state.dragFromColId !== col.id) {
+            moveCard(state.dragCardId, state.dragFromColId, col.id);
+          }
+          state.dragCardId = null;
+          state.dragFromColId = null;
+        });
+
+        if (col.cards.length === 0) {
+          var hint = document.createElement('div');
+          hint.className = 'empty-hint';
+          hint.textContent = 'No cards yet. Click "Add card" below to create one.';
+          body.appendChild(hint);
+        } else if (visibleCards.length === 0) {
+          var hint2 = document.createElement('div');
+          hint2.className = 'empty-hint';
+          hint2.textContent = 'No cards match your search in this column.';
+          body.appendChild(hint2);
+        }
+
+        col.cards.forEach(function (card) {
+          var hidden = !matchesSearch(card);
+          var cardEl = buildCard(card, col);
+          if (hidden) cardEl.style.display = 'none';
+          body.appendChild(cardEl);
+        });
+
+        colEl.appendChild(body);
+
+        if (state.composerColId === col.id) {
+          colEl.appendChild(buildComposer(col));
+        } else {
+          var addBtn = document.createElement('button');
+          addBtn.className = 'add-card';
+          addBtn.innerHTML =
+            '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>' +
+            'Add card';
+          addBtn.addEventListener('click', function () {
+            state.composerColId = col.id;
+            render();
+          });
+          colEl.appendChild(addBtn);
+        }
+
+        el.board.appendChild(colEl);
+      });
+
+      if (state.newColOpen) {
+        el.board.appendChild(buildNewColumnInput());
+      } else {
+        var addColBtn = document.createElement('button');
+        addColBtn.className = 'add-col';
+        addColBtn.innerHTML =
+          '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>' +
+          'Add another column';
+        addColBtn.addEventListener('click', function () {
+          state.newColOpen = true;
+          render();
+        });
+        el.board.appendChild(addColBtn);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function buildCard(card, col) {
+      var cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.dataset.cardId = card.id;
+      cardEl.dataset.colId = col.id;
+      cardEl.draggable = true;
+
+      if (card.priority && card.priority !== 'none') {
+        var prioBar = document.createElement('div');
+        prioBar.className = 'card-priority';
+        prioBar.style.background = PRIORITY_COLORS[card.priority];
+        cardEl.appendChild(prioBar);
+      }
+
+      if (card.labels.length) {
+        var labelWrap = document.createElement('div');
+        labelWrap.className = 'card-labels';
+        card.labels.forEach(function (lid) {
+          var lbl = LABELS.filter(function (l) { return l.id === lid; })[0];
+          if (!lbl) return;
+          var chip = document.createElement('div');
+          chip.className = 'label-chip';
+          chip.style.background = lbl.color;
+          chip.title = lbl.name;
+          labelWrap.appendChild(chip);
+        });
+        cardEl.appendChild(labelWrap);
+      }
+
+      var titleEl = document.createElement('div');
+      titleEl.className = 'card-title';
+      titleEl.textContent = card.title;
+      cardEl.appendChild(titleEl);
+
+      if (card.desc) {
+        var descEl = document.createElement('div');
+        descEl.className = 'card-desc';
+        descEl.textContent = card.desc;
+        cardEl.appendChild(descEl);
+      }
+
+      var meta = document.createElement('div');
+      meta.className = 'card-meta';
+
+      if (card.due) {
+        var dueItem = document.createElement('div');
+        var dc = dueClass(card.due);
+        dueItem.className = 'meta-item meta-due' + (dc ? ' ' + dc : '');
+        dueItem.innerHTML =
+          '<svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14z"/></svg>' +
+          '<span>' + formatDue(card.due) + '</span>';
+        meta.appendChild(dueItem);
+      }
+
+      if (card.checks.length) {
+        var done = card.checks.filter(function (c) { return c.d; }).length;
+        var total = card.checks.length;
+        var pct = Math.round((done / total) * 100);
+        var checkItem = document.createElement('div');
+        checkItem.className = 'meta-item meta-checklist';
+        checkItem.innerHTML =
+          '<svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>' +
+          '<span>' + done + '/' + total + '</span>' +
+          '<span class="check-progress"><span style="width:' + pct + '%"></span></span>';
+        meta.appendChild(checkItem);
+      }
+
+      if (meta.children.length) {
+        cardEl.appendChild(meta);
+      }
+
+      cardEl.addEventListener('click', function (e) {
+        if (e.target.closest('.card-title') || e.target.closest('.card-desc')) {
+          e.stopPropagation();
+        }
+        openCardModal(card.id);
+      });
+
+      cardEl.addEventListener('dragstart', function (e) {
+        state.dragCardId = card.id;
+        state.dragFromColId = col.id;
+        cardEl.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', card.id); } catch (err) {}
+      });
+
+      cardEl.addEventListener('dragend', function () {
+        cardEl.classList.remove('dragging');
+        document.querySelectorAll('.col.drag-over').forEach(function (c) {
+          c.classList.remove('drag-over');
+        });
+      });
+
+      cardEl.addEventListener('dblclick', function (e) {
+        e.stopPropagation();
+        var t = cardEl.querySelector('.card-title');
+        t.contentEditable = 'true';
+        t.focus();
+        document.execCommand && document.execCommand('selectAll', false, null);
+      });
+
+      var cardTitleEl = cardEl.querySelector('.card-title');
+      cardTitleEl.addEventListener('blur', function () {
+        var next = cardTitleEl.textContent.trim();
+        if (!next) {
+          cardTitleEl.textContent = card.title;
+          return;
+        }
+        if (next !== card.title) {
+          card.title = next;
+          save();
+          showToast('Card renamed');
+        }
+      });
+      cardTitleEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          cardTitleEl.blur();
+        }
+        e.stopPropagation();
+      });
+      cardTitleEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+
+      return cardEl;
+    }
+
+    function buildComposer(col) {
+      var wrap = document.createElement('div');
+      wrap.className = 'composer';
+
+      var ta = document.createElement('textarea');
+      ta.placeholder = 'Card title...';
+      ta.value = '';
+      wrap.appendChild(ta);
+
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Description (optional)';
+      wrap.appendChild(input);
+
+      var row = document.createElement('div');
+      row.className = 'composer-row';
+
+      var addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-accent';
+      addBtn.textContent = 'Add card';
+
+      var cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-ghost';
+      cancelBtn.textContent = 'Cancel';
+
+      row.appendChild(addBtn);
+      row.appendChild(cancelBtn);
+      wrap.appendChild(row);
+
+      function commit() {
+        var title = ta.value.trim();
+        if (!title) {
+          showToast('Card needs a title', true);
+          return;
+        }
+        col.cards.push({
+          id: uid('k'),
+          title: title,
+          desc: input.value.trim(),
+          labels: [],
+          priority: 'none',
+          due: '',
+          checks: []
+        });
+        state.composerColId = null;
+        save();
+        render();
+        showToast('Card added');
+      }
+
+      addBtn.addEventListener('click', commit);
+      cancelBtn.addEventListener('click', function () {
+        state.composerColId = null;
+        render();
+      });
+
+      ta.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          commit();
+        } else if (e.key === 'Escape') {
+          state.composerColId = null;
+          render();
+        }
+      });
+
+      setTimeout(function () { ta.focus(); }, 30);
+
+      return wrap;
+    }
+
+    function buildNewColumnInput() {
+      var wrap = document.createElement('div');
+      wrap.className = 'col-input';
+
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Column name...';
+      wrap.appendChild(input);
+
+      var row = document.createElement('div');
+      row.className = 'col-input-row';
+
+      var addBtn = document.createElement('button');
+      addBtn.className = 'btn btn-accent';
+      addBtn.textContent = 'Add column';
+
+      var cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-ghost';
+      cancelBtn.textContent = 'Cancel';
+
+      row.appendChild(addBtn);
+      row.appendChild(cancelBtn);
+      wrap.appendChild(row);
+
+      function commit() {
+        var name = input.value.trim();
+        if (!name) {
+          showToast('Column needs a name', true);
+          return;
+        }
+        state.columns.push({
+          id: uid('c'),
+          title: name,
+          color: COL_COLORS[state.columns.length % COL_COLORS.length],
+          cards: []
+        });
+        state.newColOpen = false;
+        save();
+        render();
+        showToast('Column added');
+      }
+
+      addBtn.addEventListener('click', commit);
+      cancelBtn.addEventListener('click', function () {
+        state.newColOpen = false;
+        render();
+      });
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit();
+        } else if (e.key === 'Escape') {
+          state.newColOpen = false;
+          render();
+        }
+      });
+
+      setTimeout(function () { input.focus(); }, 30);
+
+      return wrap;
+    }
+
+    function deleteColumn(colId) {
+      var idx = state.columns.findIndex(function (c) { return c.id === colId; });
+      if (idx === -1) return;
+      var col = state.columns[idx];
+      if (col.cards.length > 0) {
+        if (!confirm('Delete column "' + col.title + '" and its ' + col.cards.length + ' card(s)?')) return;
+      }
+      state.columns.splice(idx, 1);
+      save();
+      render();
+      showToast('Column deleted', true);
+    }
+
+    function moveCard(cardId, fromColId, toColId) {
+      var fromCol = state.columns.filter(function (c) { return c.id === fromColId; })[0];
+      var toCol = state.columns.filter(function (c) { return c.id === toColId; })[0];
+      if (!fromCol || !toCol) return;
+      var idx = fromCol.cards.findIndex(function (c) { return c.id === cardId; });
+      if (idx === -1) return;
+      var card = fromCol.cards.splice(idx, 1)[0];
+      toCol.cards.push(card);
+      save();
+      render();
+      showToast('Moved to ' + toCol.title);
+    }
+
+    function openCardModal(cardId) {
+      var found = findCard(cardId);
+      if (!found) return;
+      state.editingCardId = cardId;
+      state.editingColId = found.col.id;
+      state.tempChecks = found.card.checks.map(function (c) { return { t: c.t, d: c.d }; });
+      state.tempLabels = found.card.labels.slice();
+      state.tempPriority = found.card.priority || 'none';
+      state.tempDue = found.card.due || '';
+
+      el.modalDot.style.background = found.col.color;
+      el.modalColName.textContent = found.col.title;
+      el.modalCardTitle.textContent = found.card.title;
+      el.editTitle.value = found.card.title;
+      el.editDesc.value = found.card.desc || '';
+      el.editDue.value = found.card.due || '';
+
+      renderLabelPicker();
+      renderPriorityPicker();
+      renderChecklist();
+      el.cardModal.classList.add('open');
+      setTimeout(function () { el.editTitle.focus(); }, 60);
+    }
+
+    function closeCardModal() {
+      el.cardModal.classList.remove('open');
+      state.editingCardId = null;
+      state.editingColId = null;
+    }
+
+    function renderLabelPicker() {
+      el.labelPicker.innerHTML = '';
+      LABELS.forEach(function (lbl) {
+        var b = document.createElement('div');
+        b.className = 'label-pick' + (state.tempLabels.indexOf(lbl.id) !== -1 ? ' on' : '');
+        b.style.background = lbl.color;
+        b.title = lbl.name;
+        b.addEventListener('click', function () {
+          var i = state.tempLabels.indexOf(lbl.id);
+          if (i === -1) state.tempLabels.push(lbl.id);
+          else state.tempLabels.splice(i, 1);
+          renderLabelPicker();
+        });
+        el.labelPicker.appendChild(b);
+      });
+    }
+
+    function renderPriorityPicker() {
+      el.priorityPicker.querySelectorAll('.prio-pick').forEach(function (b) {
+        b.classList.toggle('on', b.dataset.prio === state.tempPriority);
+      });
+    }
+
+    function renderChecklist() {
+      el.checklist.innerHTML = '';
+
+      if (state.tempChecks.length === 0) {
+        var empty = document.createElement('div');
+        empty.style.cssText = 'font-size:12px;color:var(--text-dim);padding:6px 0;';
+        empty.textContent = 'No items yet.';
+        el.checklist.appendChild(empty);
+      }
+
+      state.tempChecks.forEach(function (item, i) {
+        var row = document.createElement('div');
+        row.className = 'check-item' + (item.d ? ' done' : '');
+
+        var box = document.createElement('button');
+        box.className = 'check-box';
+        box.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
+        box.addEventListener('click', function () {
+          item.d = !item.d;
+          renderChecklist();
+        });
+
+        var txt = document.createElement('div');
+        txt.className = 'check-text';
+        txt.contentEditable = 'true';
+        txt.spellcheck = false;
+        txt.textContent = item.t;
+        txt.addEventListener('blur', function () {
+          var next = txt.textContent.trim();
+          if (!next) {
+            state.tempChecks.splice(i, 1);
+            renderChecklist();
+            return;
+          }
+          item.t = next;
+        });
+        txt.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            txt.blur();
+            el.checkInput.focus();
+          }
+        });
+
+        var del = document.createElement('button');
+        del.className = 'check-del';
+        del.innerHTML = '&times;';
+        del.title = 'Remove item';
+        del.addEventListener('click', function () {
+          state.tempChecks.splice(i, 1);
+          renderChecklist();
+        });
+
+        row.appendChild(box);
+        row.appendChild(txt);
+        row.appendChild(del);
+        el.checklist.appendChild(row);
+      });
+
+      var done = state.tempChecks.filter(function (c) { return c.d; }).length;
+      var total = state.tempChecks.length;
+      el.checkSummary.textContent = total ? done + ' of ' + total + ' done' : '';
+    }
+
+    function addCheckItem() {
+      var v = el.checkInput.value.trim();
+      if (!v) return;
+      state.tempChecks.push({ t: v, d: false });
+      el.checkInput.value = '';
+      renderChecklist();
+      el.checkInput.focus();
+    }
+
+    function saveCardEdits() {
+      var found = findCard(state.editingCardId);
+      if (!found) { closeCardModal(); return; }
+
+      var newTitle = el.editTitle.value.trim();
+      if (!newTitle) {
+        showToast('Title cannot be empty', true);
+        el.editTitle.focus();
+        return;
+      }
+
+      found.card.title = newTitle;
+      found.card.desc = el.editDesc.value.trim();
+      found.card.labels = state.tempLabels.slice();
+      found.card.priority = state.tempPriority;
+      found.card.due = el.editDue.value || '';
+      found.card.checks = state.tempChecks.map(function (c) { return { t: c.t, d: c.d }; });
+
+      save();
+      render();
+      closeCardModal();
+      showToast('Card saved');
+    }
+
+    function deleteCard() {
+      var found = findCard(state.editingCardId);
+      if (!found) { closeCardModal(); return; }
+      if (!confirm('Delete "' + found.card.title + '"?')) return;
+      found.col.cards.splice(found.cardIndex, 1);
+      save();
+      render();
+      closeCardModal();
+      showToast('Card deleted', true);
+    }
+
+    function initEvents() {
+      el.searchInput.addEventListener('input', function () {
+        state.search = el.searchInput.value.trim();
+        render();
+      });
+
+      el.btnAddColumn.addEventListener('click', function () {
+        state.newColOpen = true;
+        render();
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        if (!confirm('Reset the board to default? All your cards will be replaced.')) return;
+        state.columns = defaultBoard().columns;
+        save();
+        render();
+        showToast('Board reset');
+      });
+
+      el.modalClose.addEventListener('click', closeCardModal);
+      el.cancelEdit.addEventListener('click', closeCardModal);
+      el.saveEdit.addEventListener('click', saveCardEdits);
+      el.deleteCard.addEventListener('click', deleteCard);
+
+      el.cardModal.addEventListener('click', function (e) {
+        if (e.target === el.cardModal) closeCardModal();
+      });
+
+      el.checkAddBtn.addEventListener('click', addCheckItem);
+      el.checkInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCheckItem();
+        }
+      });
+
+      el.dueClear.addEventListener('click', function () {
+        el.editDue.value = '';
+      });
+
+      el.priorityPicker.querySelectorAll('.prio-pick').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.tempPriority = b.dataset.prio;
+          renderPriorityPicker();
+        });
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && el.cardModal.classList.contains('open')) {
+          closeCardModal();
+        }
+        if (e.key === '/' && document.activeElement !== el.searchInput &&
+            document.activeElement.tagName !== 'INPUT' &&
+            document.activeElement.tagName !== 'TEXTAREA' &&
+            !document.activeElement.isContentEditable) {
+          e.preventDefault();
+          el.searchInput.focus();
+        }
+      });
+    }
+
+    function init() {
+      if (!load()) {
+        state.columns = defaultBoard().columns;
+      }
+      initEvents();
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
