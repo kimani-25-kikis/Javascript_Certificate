@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streakboard · Habit Heatmap</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0f1211;
+      --bg-rail: #171b19;
+      --bg-panel: #1c211f;
+      --bg-sunken: #0b0d0c;
+      --bg-hover: #242a27;
+      --border: #2a312e;
+      --border-soft: #1f2523;
+      --text: #e6ede8;
+      --text-mid: #9aa89f;
+      --text-dim: #5f6b64;
+
+      --lvl-0: #1e2421;
+      --lvl-1: #2d5c3d;
+      --lvl-2: #3f8a55;
+      --lvl-3: #58b06e;
+      --lvl-4: #7ed693;
+
+      --ember: #e08a3c;
+      --ember-glow: rgba(224, 138, 60, 0.35);
+      --rust: #b04a3a;
+      --sage: #7d9a6a;
+      --slate: #6a8296;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(88, 176, 110, 0.05), transparent 55%),
+        radial-gradient(ellipse at 90% 100%, rgba(224, 138, 60, 0.04), transparent 55%);
+    }
+
+    .rail {
+      flex-shrink: 0;
+      padding: 14px 26px;
+      background: var(--bg-rail);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+
+    .mark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mark-glyph {
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 2px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .mark-glyph span {
+      border-radius: 1px;
+    }
+
+    .mark-glyph span:nth-child(1) { background: var(--lvl-1); }
+    .mark-glyph span:nth-child(2) { background: var(--lvl-3); }
+    .mark-glyph span:nth-child(3) { background: var(--lvl-2); }
+    .mark-glyph span:nth-child(4) { background: var(--lvl-4); }
+
+    .mark-text strong {
+      font-size: 14.5px;
+      letter-spacing: 0.2px;
+      display: block;
+    }
+
+    .mark-text small {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 1px;
+      display: block;
+    }
+
+    .rail-divider {
+      width: 1px;
+      height: 30px;
+      background: var(--border);
+    }
+
+    .today-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 14px 6px 12px;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--ember);
+    }
+
+    .today-badge .cal {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    .today-badge .day-num {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ember);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .today-badge .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .today-badge .meta strong {
+      font-size: 12.5px;
+      letter-spacing: 0.3px;
+    }
+
+    .today-badge .meta span {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
+    }
+
+    .rail-tail {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      padding: 9px 15px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      color: var(--text);
+      border-color: #38403c;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .btn-ember {
+      background: var(--ember);
+      border-color: var(--ember);
+      color: #1a1006;
+    }
+
+    .btn-ember:hover {
+      background: #f0a155;
+      border-color: #f0a155;
+      color: #1a1006;
+    }
+
+    .frame {
+      flex: 1;
+      padding: 26px;
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .top-row { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+    }
+
+    .panel-head {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-head h2::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--ember);
+      box-shadow: 0 0 8px var(--ember-glow);
+    }
+
+    .habit-tabs {
+      display: flex;
+      gap: 3px;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      padding: 3px;
+      flex-wrap: wrap;
+    }
+
+    .habit-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 7px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .habit-tab:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .habit-tab.on {
+      color: var(--text);
+      background: var(--bg-hover);
+    }
+
+    .habit-tab .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .habit-tab .del {
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text-dim);
+      padding: 0 2px;
+      margin-left: 2px;
+      transition: 0.15s;
+    }
+
+    .habit-tab .del:hover {
+      color: var(--rust);
+    }
+
+    /* Heatmap */
+    .heat-wrap {
+      padding: 22px 20px 26px;
+      overflow-x: auto;
+    }
+
+    .heat-wrap::-webkit-scrollbar {
+      height: 8px;
+    }
+    .heat-wrap::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .heat-grid {
+      display: grid;
+      grid-template-rows: 18px repeat(7, 1fr);
+      gap: 3px;
+      min-width: 780px;
+    }
+
+    .month-lane {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 15px;
+      grid-template-rows: 18px;
+      gap: 3px;
+      align-items: end;
+    }
+
+    .month-lane span {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      grid-row: 1;
+    }
+
+    .day-lane {
+      display: grid;
+      grid-template-columns: 26px;
+      grid-template-rows: repeat(7, 1fr);
+      gap: 3px;
+      align-items: center;
+    }
+
+    .day-lane span {
+      font-size: 9.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      text-align: right;
+      padding-right: 4px;
+      height: 15px;
+      line-height: 15px;
+    }
+
+    .cells-area {
+      position: relative;
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(7, 1fr);
+      grid-auto-columns: 15px;
+      gap: 3px;
+      grid-row: 2 / 9;
+    }
+
+    .day-cell {
+      width: 15px;
+      height: 15px;
+      border-radius: 2px;
+      background: var(--lvl-0);
+      cursor: pointer;
+      transition: 0.1s;
+      position: relative;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .day-cell:hover {
+      outline: 2px solid var(--text);
+      outline-offset: -1px;
+      z-index: 5;
+    }
+
+    .day-cell.future {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .day-cell.future:hover {
+      outline: none;
+    }
+
+    .day-cell.today {
+      outline: 2px solid var(--ember);
+      outline-offset: -1px;
+      box-shadow: 0 0 10px var(--ember-glow);
+    }
+
+    .day-cell.lvl-0 { background: var(--lvl-0); }
+    .day-cell.lvl-1 { background: var(--lvl-1); }
+    .day-cell.lvl-2 { background: var(--lvl-2); }
+    .day-cell.lvl-3 { background: var(--lvl-3); }
+    .day-cell.lvl-4 { background: var(--lvl-4); }
+
+    .heat-legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.3px;
+      padding: 0 20px 20px;
+      flex-wrap: wrap;
+    }
+
+    .heat-legend .swatches {
+      display: flex;
+      gap: 3px;
+    }
+
+    .heat-legend .sw {
+      width: 13px;
+      height: 13px;
+      border-radius: 2px;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .heat-legend .sw.lvl-0 { background: var(--lvl-0); }
+    .heat-legend .sw.lvl-1 { background: var(--lvl-1); }
+    .heat-legend .sw.lvl-2 { background: var(--lvl-2); }
+    .heat-legend .sw.lvl-3 { background: var(--lvl-3); }
+    .heat-legend .sw.lvl-4 { background: var(--lvl-4); }
+
+    .heat-legend .note {
+      margin-left: auto;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.8px;
+    }
+
+    /* Sidebar stats */
+    .stats-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 18px 20px;
+      position: relative;
+    }
+
+    .stat-card.streak-card {
+      border-left: 3px solid var(--ember);
+      background:
+        linear-gradient(90deg, rgba(224, 138, 60, 0.06), transparent 60%),
+        var(--bg-panel);
+    }
+
+    .stat-head {
+      font-size: 10.5px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-head svg {
+      width: 13px;
+      height: 13px;
+      fill: var(--text-dim);
+    }
+
+    .stat-big {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-big.ember {
+      color: var(--ember);
+      text-shadow: 0 0 20px var(--ember-glow);
+    }
+
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      margin-top: 8px;
+      line-height: 1.5;
+      letter-spacing: 0.2px;
+    }
+
+    .week-mini {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .week-mini .mini-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .week-mini .mini-col .lbl {
+      font-size: 9.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .week-mini .mini-col .bar-wrap {
+      width: 100%;
+      height: 56px;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border-soft);
+      display: flex;
+      align-items: flex-end;
+      padding: 2px;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .week-mini .mini-col .bar {
+      width: 100%;
+      background: linear-gradient(180deg, var(--lvl-4), var(--lvl-2));
+      border-radius: 1px;
+      transition: height 0.4s cubic-bezier(0.34, 1.3, 0.5, 1);
+      min-height: 2px;
+    }
+
+    .week-mini .mini-col .val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-mid);
+      font-weight: 700;
+    }
+
+    .streak-flame {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .habit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .habit-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .habit-line:hover {
+      background: var(--bg-hover);
+      border-color: #38403c;
+    }
+
+    .habit-line.on {
+      border-color: var(--ember);
+      background: rgba(224, 138, 60, 0.05);
+    }
+
+    .habit-line .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .habit-line .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .habit-line .name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .habit-line .streak-info {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      letter-spacing: 0.3px;
+    }
+
+    .habit-line .streak-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-mid);
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .habit-line.on .streak-num {
+      color: var(--ember);
+    }
+
+    /* Modal */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 5, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      padding: 20px;
+    }
+
+    .modal-mask.open { display: flex; }
+
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.75);
+      animation: modalIn 0.22s cubic-bezier(0.3, 1.3, 0.5, 1);
+    }
+
+    @keyframes modalIn {
+      from { transform: translateY(-10px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .modal h3 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .modal p {
+      font-size: 12.5px;
+      color: var(--text-mid);
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      font-size: 10.5px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--bg-sunken);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 11px 13px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13.5px;
+      outline: none;
+      transition: 0.15s;
+    }
+
+    .field-input:focus {
+      border-color: var(--ember);
+      box-shadow: 0 0 0 3px var(--ember-glow);
+    }
+
+    .color-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .color-pick {
+      width: 32px;
+      height: 32px;
+      border-radius: 2px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.15s;
+    }
+
+    .color-pick:hover {
+      transform: scale(1.08);
+    }
+
+    .color-pick.on {
+      border-color: var(--text);
+      box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3px var(--text);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 22px;
+    }
+
+    .modal-actions .btn {
+      padding: 10px 18px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translate(-50%, 80px);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--ember);
+      border-radius: 2px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.65);
+      opacity: 0;
+      transition: 0.32s cubic-bezier(0.34, 1.4, 0.5, 1);
+      z-index: 1200;
+      font-size: 12.5px;
+      font-weight: 500;
+      pointer-events: none;
+      max-width: 340px;
+      letter-spacing: 0.2px;
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    .toast svg {
+      width: 14px;
+      height: 14px;
+      fill: var(--ember);
+      flex-shrink: 0;
+    }
+
+    .toast.warn {
+      border-left-color: var(--rust);
+    }
+
+    .toast.warn svg {
+      fill: var(--rust);
+    }
+
+    .footer-note {
+      padding: 0 26px 26px;
+      max-width: 1320px;
+      margin: 0 auto;
+      width: 100%;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.3px;
+      line-height: 1.6;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 640px) {
+      .rail {
+        padding: 12px 16px;
+        gap: 14px;
+      }
+      .rail-divider { display: none; }
+      .mark-text small { display: none; }
+      .frame { padding: 16px; gap: 16px; }
+      .panel-head { padding: 12px 14px; }
+      .heat-wrap { padding: 16px 12px 18px; }
+      .stat-big { font-size: 34px; }
+      .today-badge { padding: 5px 10px; }
+      .today-badge .day-num { font-size: 17px; }
+      .today-badge .meta strong { font-size: 11.5px; }
+      .today-badge .meta span { display: none; }
+      .btn span { display: none; }
+      .btn { padding: 9px 11px; }
+      .footer-note { padding: 0 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="rail">
+    <div class="mark">
+      <div class="mark-glyph">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="mark-text">
+        <strong>Streakboard</strong>
+        <small>Daily Ledger</small>
+      </div>
+    </div>
+
+    <div class="rail-divider"></div>
+
+    <div class="today-badge">
+      <div>
+        <div class="cal" id="todayMonth">—</div>
+        <div class="day-num" id="todayNum">—</div>
+      </div>
+      <div class="meta">
+        <strong id="todayWeekday">—</strong>
+        <span id="todayYear">—</span>
+      </div>
+    </div>
+
+    <div class="rail-tail">
+      <button class="btn" id="btnToday" title="Jump to today">
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        <span>Today</span>
+      </button>
+      <button class="btn btn-ember" id="btnAddHabit">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+        <span>New habit</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="frame">
+
+    <div class="top-row">
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="activeHabitName">Loading…</h2>
+          <div class="habit-tabs" id="habitTabs"></div>
+        </div>
+
+        <div class="heat-wrap">
+          <div class="heat-grid" id="heatGrid"></div>
+        </div>
+
+        <div class="heat-legend">
+          <span>Less</span>
+          <div class="swatches">
+            <div class="sw lvl-0"></div>
+            <div class="sw lvl-1"></div>
+            <div class="sw lvl-2"></div>
+            <div class="sw lvl-3"></div>
+            <div class="sw lvl-4"></div>
+          </div>
+          <span>More</span>
+          <span class="note" id="rangeNote">—</span>
+        </div>
+      </section>
+
+      <aside class="stats-col">
+
+        <div class="stat-card streak-card">
+          <div class="stat-head">
+            <svg viewBox="0 0 24 24"><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+            Current streak
+          </div>
+          <div class="stat-big ember" id="currentStreak">0</div>
+          <div class="stat-sub" id="streakSub">Log today to begin a streak.</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-head">
+            <svg viewBox="0 0 24 24"><path d="M3 17h3v-6H3v6zm5 0h3V7H8v10zm5 0h3v-9h-3v9zm5 0h3V4h-3v13z"/></svg>
+            Last 7 days
+          </div>
+          <div class="week-mini" id="weekMini"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-head">
+            <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+            Summary
+          </div>
+          <div id="summaryList" style="display:flex;flex-direction:column;gap:9px;"></div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>All habits</h2>
+        <span style="font-size:11.5px;color:var(--text-dim);letter-spacing:0.4px;">Click to switch active</span>
+      </div>
+      <div style="padding:16px 20px 20px;">
+        <div class="habit-list" id="habitList"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="footer-note">
+    Days are stored in your browser. Click any cell to toggle a completion. The ledger covers the last 52 weeks ending today.
+  </div>
+
+  <div class="modal-mask" id="habitModal">
+    <div class="modal">
+      <h3>New habit</h3>
+      <p>Give it a clear name and pick an identifying color. You can rename or remove it later.</p>
+
+      <div class="field">
+        <label class="field-label" for="newHabitName">Name</label>
+        <input type="text" class="field-input" id="newHabitName" placeholder="e.g. Read 20 pages" maxlength="40">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Color</label>
+        <div class="color-row" id="colorRow"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="cancelHabit">Cancel</button>
+        <button class="btn btn-ember" id="confirmHabit">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+    <span id="toastText">Saved</span>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'streakboard-v1';
+      var DAYS_SHOWN = 364;
+      var DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      var MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      var COLORS = ['#e08a3c', '#58b06e', '#6a8296', '#b04a3a', '#7d9a6a', '#d4a94a', '#a371f7', '#45a0b8'];
+
+      var state = {
+        habits: [],
+        activeId: null,
+        pendingColor: COLORS[0],
+        viewEndDate: null
+      };
+
+      var el = {
+        todayMonth: document.getElementById('todayMonth'),
+        todayNum: document.getElementById('todayNum'),
+        todayWeekday: document.getElementById('todayWeekday'),
+        todayYear: document.getElementById('todayYear'),
+        habitTabs: document.getElementById('habitTabs'),
+        activeHabitName: document.getElementById('activeHabitName'),
+        heatGrid: document.getElementById('heatGrid'),
+        rangeNote: document.getElementById('rangeNote'),
+        currentStreak: document.getElementById('currentStreak'),
+        streakSub: document.getElementById('streakSub'),
+        weekMini: document.getElementById('weekMini'),
+        summaryList: document.getElementById('summaryList'),
+        habitList: document.getElementById('habitList'),
+        btnAddHabit: document.getElementById('btnAddHabit'),
+        btnToday: document.getElementById('btnToday'),
+        habitModal: document.getElementById('habitModal'),
+        newHabitName: document.getElementById('newHabitName'),
+        colorRow: document.getElementById('colorRow'),
+        cancelHabit: document.getElementById('cancelHabit'),
+        confirmHabit: document.getElementById('confirmHabit'),
+        toast: document.getElementById('toast'),
+        toastText: document.getElementById('toastText')
+      };
+
+      function pad(n) { return String(n).padStart(2, '0'); }
+
+      function toKey(date) {
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+      }
+
+      function parseKey(key) {
+        var parts = key.split('-');
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
+
+      function today() {
+        var d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      function addDays(date, days) {
+        var d = new Date(date);
+        d.setDate(d.getDate() + days);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      function dayDiff(a, b) {
+        return Math.round((a - b) / 86400000);
+      }
+
+      function uid() {
+        return 'h' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+      }
+
+      function defaultHabits() {
+        var t = today();
+        return [
+          {
+            id: uid(),
+            name: 'Morning walk',
+            color: COLORS[1],
+            days: seedDays(t, 0.72, 'walk')
+          },
+          {
+            id: uid(),
+            name: 'Read 20 pages',
+            color: COLORS[0],
+            days: seedDays(t, 0.55, 'read')
+          },
+          {
+            id: uid(),
+            name: 'No phone after 9pm',
+            color: COLORS[5],
+            days: seedDays(t, 0.48, 'phone')
+          }
+        ];
+      }
+
+      function seedDays(todayDate, density, seed) {
+        var days = {};
+        var n = 0;
+        for (var s = 0; s < seed.length; s++) n += seed.charCodeAt(s);
+
+        for (var i = 0; i < DAYS_SHOWN; i++) {
+          var d = addDays(todayDate, -i);
+          var key = toKey(d);
+          var wave = Math.sin((i + n) * 0.31) * 0.5 + 0.5;
+          var noise = ((i * 9301 + n * 49297) % 233280) / 233280;
+          var chance = density * (0.55 + wave * 0.55) * (0.6 + noise * 0.8);
+
+          if (i < 3) chance *= 1.3;
+
+          if (chance > 0.62) {
+            var strength = noise < 0.15 ? 4 : noise < 0.42 ? 3 : noise < 0.72 ? 2 : 1;
+            days[key] = strength;
+          }
+        }
+        return days;
+      }
+
+      function load() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.habits) && parsed.habits.length) {
+              state.habits = parsed.habits;
+              state.activeId = parsed.activeId || parsed.habits[0].id;
+              return true;
+            }
+          }
+        } catch (e) {}
+        return false;
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            habits: state.habits,
+            activeId: state.activeId
+          }));
+        } catch (e) {}
+      }
+
+      function getHabit(id) {
+        for (var i = 0; i < state.habits.length; i++) {
+          if (state.habits[i].id === id) return state.habits[i];
+        }
+        return null;
+      }
+
+      function activeHabit() {
+        return getHabit(state.activeId) || state.habits[0];
+      }
+
+      function showToast(text, warn) {
+        el.toastText.textContent = text;
+        el.toast.classList.toggle('warn', !!warn);
+        el.toast.classList.add('show');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(function () {
+          el.toast.classList.remove('show');
+        }, 1900);
+      }
+
+      function renderTodayBadge() {
+        var t = today();
+        el.todayMonth.textContent = MONTH_LABELS[t.getMonth()].toUpperCase();
+        el.todayNum.textContent = t.getDate();
+        el.todayWeekday.textContent = DAY_LABELS[(t.getDay() + 6) % 7];
+        el.todayYear.textContent = t.getFullYear();
+      }
+
+      function renderTabs() {
+        el.habitTabs.innerHTML = '';
+        state.habits.forEach(function (h) {
+          var tab = document.createElement('button');
+          tab.className = 'habit-tab' + (h.id === state.activeId ? ' on' : '');
+
+          var dot = document.createElement('span');
+          dot.className = 'dot';
+          dot.style.background = h.color;
+
+          var label = document.createElement('span');
+          label.textContent = h.name;
+
+          tab.appendChild(dot);
+          tab.appendChild(label);
+
+          if (state.habits.length > 1) {
+            var del = document.createElement('span');
+            del.className = 'del';
+            del.textContent = '\u00D7';
+            del.title = 'Remove ' + h.name;
+            del.addEventListener('click', function (e) {
+              e.stopPropagation();
+              removeHabit(h.id);
+            });
+            tab.appendChild(del);
+          }
+
+          tab.addEventListener('click', function () {
+            state.activeId = h.id;
+            save();
+            renderAll();
+          });
+
+          el.habitTabs.appendChild(tab);
+        });
+      }
+
+      function renderHeatGrid() {
+        var habit = activeHabit();
+        if (!habit) return;
+
+        el.activeHabitName.textContent = habit.name;
+
+        var end = today();
+        var start = addDays(end, -(DAYS_SHOWN - 1));
+
+        el.rangeNote.textContent = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
+          ' \u2014 ' + end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // Compute offset: shift start back so column 0 begins on a Monday
+        var startDow = (start.getDay() + 6) % 7;
+        var gridStart = addDays(start, -startDow);
+
+        var totalCols = Math.ceil((dayDiff(end, gridStart) + 1) / 7);
+        if (totalCols * 7 - dayDiff(end, gridStart) < 7) totalCols += 0;
+        // ensure 52 or 53 columns based on span
+        totalCols = Math.max(52, totalCols);
+
+        el.heatGrid.innerHTML = '';
+
+        var lane = document.createElement('div');
+        lane.className = 'month-lane';
+        lane.style.gridColumn = '2';
+        lane.style.gridRow = '1';
+
+        var dayLane = document.createElement('div');
+        dayLane.className = 'day-lane';
+        dayLane.style.gridColumn = '1';
+        dayLane.style.gridRow = '2 / 9';
+
+        var cellsArea = document.createElement('div');
+        cellsArea.className = 'cells-area';
+        cellsArea.style.gridColumn = '2';
+        cellsArea.style.gridRow = '2 / 9';
+        cellsArea.style.gridTemplateColumns = 'repeat(' + totalCols + ', 15px)';
+
+        var currentMonth = -1;
+        for (var c = 0; c < totalCols; c++) {
+          var colStart = addDays(gridStart, c * 7);
+          var span = document.createElement('span');
+          if (colStart.getMonth() !== currentMonth) {
+            span.textContent = MONTH_LABELS[colStart.getMonth()];
+            currentMonth = colStart.getMonth();
+          }
+          lane.appendChild(span);
+        }
+
+        for (var d = 0; d < 7; d++) {
+          var ds = document.createElement('span');
+          ds.textContent = DAY_LABELS[d];
+          dayLane.appendChild(ds);
+        }
+
+        var tKey = toKey(end);
+        var cells = [];
+
+        for (var col = 0; col < totalCols; col++) {
+          for (var row = 0; row < 7; row++) {
+            var cellDate = addDays(gridStart, col * 7 + row);
+            var key = toKey(cellDate);
+            var isFuture = cellDate > end;
+            var isToday = key === tKey;
+            var level = habit.days[key] || 0;
+
+            var cell = document.createElement('div');
+            cell.className = 'day-cell lvl-' + level;
+            cell.dataset.key = key;
+            if (isFuture) cell.classList.add('future');
+            if (isToday) cell.classList.add('today');
+
+            var title = cellDate.toLocaleDateString(undefined, {
+              weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+            }) + ' \u2014 ' + (level > 0 ? level + '/4' : 'not logged');
+
+            cell.title = title;
+
+            if (!isFuture) {
+              (function (k, dateObj) {
+                cell.addEventListener('click', function () {
+                  toggleDay(habit, k, dateObj);
+                });
+              })(key, cellDate);
+            }
+
+            cellsArea.appendChild(cell);
+            cells.push(cell);
+          }
+        }
+
+        el.heatGrid.appendChild(lane);
+        el.heatGrid.appendChild(dayLane);
+        el.heatGrid.appendChild(cellsArea);
+
+        el.heatGrid.style.gridTemplateColumns = '26px 1fr';
+      }
+
+      function toggleDay(habit, key, dateObj) {
+        var current = habit.days[key] || 0;
+        var next = (current + 1) % 5;
+
+        if (next === 0) {
+          delete habit.days[key];
+        } else {
+          habit.days[key] = next;
+        }
+
+        save();
+        renderAll();
+        showToast(next === 0 ? 'Cleared ' + formatShort(dateObj) : 'Logged ' + formatShort(dateObj) + ' at level ' + next);
+      }
+
+      function formatShort(d) {
+        return MONTH_LABELS[d.getMonth()] + ' ' + d.getDate();
+      }
+
+      function computeStreak(habit) {
+        var t = today();
+        var streak = 0;
+        var cursor = new Date(t);
+
+        if (!habit.days[toKey(cursor)]) {
+          cursor = addDays(cursor, -1);
+        }
+
+        while (habit.days[toKey(cursor)]) {
+          streak++;
+          cursor = addDays(cursor, -1);
+          if (streak > 4000) break;
+        }
+        return streak;
+      }
+
+      function computeLongest(habit) {
+        var keys = Object.keys(habit.days).sort();
+        if (!keys.length) return 0;
+
+        var longest = 0;
+        var run = 0;
+        var prev = null;
+
+        for (var i = 0; i < keys.length; i++) {
+          var d = parseKey(keys[i]);
+          if (prev && dayDiff(d, prev) === 1) {
+            run++;
+          } else {
+            run = 1;
+          }
+          if (run > longest) longest = run;
+          prev = d;
+        }
+        return longest;
+      }
+
+      function computeStats(habit) {
+        var totalLogged = 0;
+        var last30 = 0;
+        var last30Possible = 30;
+        var t = today();
+
+        var sumStrength = 0;
+        for (var i = 0; i < 30; i++) {
+          var d = addDays(t, -i);
+          var v = habit.days[toKey(d)] || 0;
+          if (v > 0) { last30++; }
+          sumStrength += v;
+        }
+
+        var allKeys = Object.keys(habit.days);
+        totalLogged = allKeys.length;
+
+        var avgStrength = sumStrength / 30;
+
+        return {
+          total: totalLogged,
+          last30: last30,
+          last30Possible: last30Possible,
+          avgStrength: avgStrength
+        };
+      }
+
+      function renderStats() {
+        var habit = activeHabit();
+        if (!habit) return;
+
+        var streak = computeStreak(habit);
+        var longest = computeLongest(habit);
+        var stats = computeStats(habit);
+
+        el.currentStreak.textContent = streak;
+
+        if (streak === 0) {
+          el.streakSub.textContent = 'Log today to begin a streak.';
+        } else if (streak === 1) {
+          el.streakSub.textContent = 'Day one logged. Keep going.';
+        } else if (streak < 7) {
+          el.streakSub.textContent = 'Building momentum. ' + (7 - streak) + ' days to a full week.';
+        } else if (streak < 30) {
+          el.streakSub.textContent = 'Strong rhythm. Longest so far: ' + longest + ' days.';
+        } else {
+          el.streakSub.textContent = 'Deep streak. Longest on record: ' + longest + ' days.';
+        }
+
+        // Week mini bars
+        el.weekMini.innerHTML = '';
+        var t = today();
+        for (var i = 6; i >= 0; i--) {
+          var d = addDays(t, -i);
+          var key = toKey(d);
+          var v = habit.days[key] || 0;
+          var col = document.createElement('div');
+          col.className = 'mini-col';
+
+          var lbl = document.createElement('div');
+          lbl.className = 'lbl';
+          lbl.textContent = DAY_LABELS[(d.getDay() + 6) % 7].charAt(0);
+
+          var barWrap = document.createElement('div');
+          barWrap.className = 'bar-wrap';
+
+          var bar = document.createElement('div');
+          bar.className = 'bar';
+          var pct = v === 0 ? 3 : (v / 4) * 100;
+          bar.style.height = pct + '%';
+
+          if (v === 0) {
+            bar.style.background = 'var(--lvl-0)';
+          } else {
+            bar.style.background = 'linear-gradient(180deg, ' + shadeColor(habit.color, 25) + ', ' + shadeColor(habit.color, -12) + ')';
+          }
+
+          barWrap.appendChild(bar);
+
+          var val = document.createElement('div');
+          val.className = 'val';
+          val.textContent = v === 0 ? '—' : v;
+
+          col.appendChild(lbl);
+          col.appendChild(barWrap);
+          col.appendChild(val);
+          el.weekMini.appendChild(col);
+        }
+
+        // Summary list
+        el.summaryList.innerHTML = '';
+
+        var summaryRows = [
+          { label: 'Days logged (all time)', value: stats.total },
+          { label: 'Days logged (last 30)', value: stats.last30 + ' / ' + stats.last30Possible },
+          { label: 'Longest streak', value: longest + ' d' },
+          { label: 'Avg intensity (last 30)', value: stats.avgStrength.toFixed(2) + ' / 4' }
+        ];
+
+        summaryRows.forEach(function (r) {
+          var row = document.createElement('div');
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.fontSize = '12.5px';
+
+          var lbl = document.createElement('span');
+          lbl.style.color = 'var(--text-dim)';
+          lbl.textContent = r.label;
+
+          var val = document.createElement('span');
+          val.style.fontFamily = "'JetBrains Mono', monospace";
+          val.style.fontWeight = '700';
+          val.style.color = 'var(--text)';
+          val.style.fontVariantNumeric = 'tabular-nums';
+          val.textContent = r.value;
+
+          row.appendChild(lbl);
+          row.appendChild(val);
+          el.summaryList.appendChild(row);
+        });
+      }
+
+      function shadeColor(hex, percent) {
+        var f = parseInt(hex.slice(1), 16);
+        var r = (f >> 16) & 255;
+        var g = (f >> 8) & 255;
+        var b = f & 255;
+        var adj = function (v) {
+          var n = Math.round(v + (v * percent) / 100);
+          return Math.max(0, Math.min(255, n));
+        };
+        return '#' + ((1 << 24) + (adj(r) << 16) + (adj(g) << 8) + adj(b)).toString(16).slice(1);
+      }
+
+      function renderHabitList() {
+        el.habitList.innerHTML = '';
+        state.habits.forEach(function (h) {
+          var line = document.createElement('div');
+          line.className = 'habit-line' + (h.id === state.activeId ? ' on' : '');
+
+          var sw = document.createElement('span');
+          sw.className = 'swatch';
+          sw.style.background = h.color;
+
+          var info = document.createElement('div');
+          info.className = 'info';
+
+          var name = document.createElement('div');
+          name.className = 'name';
+          name.textContent = h.name;
+
+          var meta = document.createElement('div');
+          meta.className = 'streak-info';
+          var streak = computeStreak(h);
+          var total = Object.keys(h.days).length;
+          meta.textContent = streak + ' day streak \u00B7 ' + total + ' total logged';
+
+          info.appendChild(name);
+          info.appendChild(meta);
+
+          var num = document.createElement('div');
+          num.className = 'streak-num';
+          num.textContent = streak;
+
+          line.appendChild(sw);
+          line.appendChild(info);
+          line.appendChild(num);
+
+          line.addEventListener('click', function () {
+            state.activeId = h.id;
+            save();
+            renderAll();
+          });
+
+          el.habitList.appendChild(line);
+        });
+      }
+
+      function renderAll() {
+        renderTabs();
+        renderHeatGrid();
+        renderStats();
+        renderHabitList();
+      }
+
+      function removeHabit(id) {
+        if (state.habits.length <= 1) {
+          showToast('Keep at least one habit', true);
+          return;
+        }
+        var habit = getHabit(id);
+        if (!habit) return;
+        if (!confirm('Remove "' + habit.name + '" and all of its history?')) return;
+
+        var idx = state.habits.indexOf(habit);
+        state.habits.splice(idx, 1);
+        if (state.activeId === id) {
+          state.activeId = state.habits[0].id;
+        }
+        save();
+        renderAll();
+        showToast('Habit removed');
+      }
+
+      function openModal() {
+        state.pendingColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+        el.newHabitName.value = '';
+        renderColorRow();
+        el.habitModal.classList.add('open');
+        setTimeout(function () { el.newHabitName.focus(); }, 60);
+      }
+
+      function closeModal() {
+        el.habitModal.classList.remove('open');
+      }
+
+      function renderColorRow() {
+        el.colorRow.innerHTML = '';
+        COLORS.forEach(function (c) {
+          var pick = document.createElement('div');
+          pick.className = 'color-pick' + (c === state.pendingColor ? ' on' : '');
+          pick.style.background = c;
+          pick.addEventListener('click', function () {
+            state.pendingColor = c;
+            renderColorRow();
+          });
+          el.colorRow.appendChild(pick);
+        });
+      }
+
+      function createHabit() {
+        var name = el.newHabitName.value.trim();
+        if (!name) {
+          showToast('Habit needs a name', true);
+          el.newHabitName.focus();
+          return;
+        }
+
+        var habit = {
+          id: uid(),
+          name: name,
+          color: state.pendingColor,
+          days: {}
+        };
+
+        state.habits.push(habit);
+        state.activeId = habit.id;
+        save();
+        renderAll();
+        closeModal();
+        showToast('Created "' + name + '"');
+      }
+
+      function bindEvents() {
+        el.btnAddHabit.addEventListener('click', openModal);
+        el.cancelHabit.addEventListener('click', closeModal);
+        el.confirmHabit.addEventListener('click', createHabit);
+
+        el.habitModal.addEventListener('click', function (e) {
+          if (e.target === el.habitModal) closeModal();
+        });
+
+        el.newHabitName.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            createHabit();
+          } else if (e.key === 'Escape') {
+            closeModal();
+          }
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && el.habitModal.classList.contains('open')) {
+            closeModal();
+          }
+        });
+
+        el.btnToday.addEventListener('click', function () {
+          var todayCell = el.heatGrid.querySelector('.day-cell.today');
+          if (todayCell) {
+            todayCell.scrollIntoView({ block: 'nearest', inline: 'end', behavior: 'smooth' });
+            todayCell.classList.add('today');
+          }
+          showToast('Centered on today');
+        });
+      }
+
+      function init() {
+        renderTodayBadge();
+
+        if (!load()) {
+          state.habits = defaultHabits();
+          state.activeId = state.habits[0].id;
+          save();
+        }
+
+        // Ensure active habit exists
+        if (!getHabit(state.activeId)) {
+          state.activeId = state.habits[0].id;
+        }
+
+        bindEvents();
+        renderAll();
+
+        setTimeout(function () {
+          var todayCell = el.heatGrid.querySelector('.day-cell.today');
+          if (todayCell) {
+            todayCell.scrollIntoView({ block: 'nearest', inline: 'end' });
+          }
+        }, 60);
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
